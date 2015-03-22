@@ -5,20 +5,18 @@
 
 module Migrations where
 
-import           Control.Applicative   ((<$>))
-import           Control.Monad         (forM_)
-import           Data.ByteString.Lazy  (fromStrict)
-import           Data.Digest.Pure.SHA  (sha1, showDigest)
-import           Data.Functor.Identity (Identity (), runIdentity)
-import           Data.Maybe            (maybeToList)
-import           Safe                  (lastMay)
+import           Control.Applicative  ((<$>))
+import           Control.Monad        (forM_)
+import           Data.ByteString.Lazy (fromStrict)
+import           Data.Digest.Pure.SHA (sha1, showDigest)
+import           Safe                 (lastMay)
 
-import qualified Data.Text             as T
-import qualified Data.Text.Encoding    as TE
-import qualified Data.Traversable      as TR
-import qualified Hasql                 as H
-import qualified Hasql.Backend         as HB
-import qualified Hasql.Postgres        as HP
+import qualified Data.Text            as T
+import qualified Data.Text.Encoding   as TE
+import qualified Data.Traversable     as TR
+import qualified Hasql                as H
+import qualified Hasql.Backend        as HB
+import qualified Hasql.Postgres       as HP
 
 data Migration = Migration { _migrationName     :: T.Text
                            , _migrationTx       :: forall s. H.Tx HP.Postgres s ()
@@ -29,9 +27,8 @@ instance Show Migration where
                                      " (" ++ show checksum ++ ")"
 
 migration :: T.Text -> [H.Stmt HP.Postgres] -> Migration
-migration name stats = Migration name (createTx stats) (calculateChecksum $ head stats)
+migration name stats = Migration name (createTx stats) (computeChecksum $ head stats)
   where createTx ss  = undefined
-        calculateChecksum ss = map computeChecksum ss
 
 type Checksum = T.Text
 
