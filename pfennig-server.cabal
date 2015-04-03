@@ -21,7 +21,9 @@ executable pfennig-server
                      , hasql >=0.7
                      , hasql-backend >=0.4
                      , hasql-postgres >=0.10
+                     , http-types >=0.8
                      , lens >=4.4
+                     , mtl >= 2.2
                      , safe >=0.3
                      , scotty >=0.9
                      , SHA >=1.6
