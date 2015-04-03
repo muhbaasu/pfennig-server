@@ -4,9 +4,8 @@ module Main where
 
 import           App
 import           Control.Exception.Base (bracket)
-import           Control.Monad.Reader   (runReader)
 import           Migrations
-import           Web.Scotty             (delete, get, post, scotty)
+import           Web.Scotty             (ScottyM, delete, get, post, scotty)
 
 import qualified Handlers
 import qualified Hasql                  as H
@@ -30,18 +29,17 @@ main = do
         let session = H.session pool
         let cfg = AppConfig session
         runMigrations migrations pool
-        runScotty cfg)
+        scotty 3000 $ setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createExpendituresTable
              , S.createLabelsTable
              , S.createExpendituresLabelsTable]
 
-runScotty :: AppConfig -> IO ()
-runScotty cfg =
-  scotty 3000 $ do
-    get "/expenditure" $ runReader Handlers.getExpenditures cfg
-    get "/expenditure/:id" $ runReader Handlers.getExpenditure cfg
-    post "/expenditure" $ runReader Handlers.createExpenditure cfg
-    post "/expenditure/:id" $ runReader Handlers.updateExpenditure cfg
-    delete "/expenditure/:id" $ runReader Handlers.deleteExpenditure cfg
+setupRoutes :: AppConfig -> ScottyM ()
+setupRoutes cfg = do
+  get "/expenditure" $ Handlers.getExpenditures cfg
+  get "/expenditure/:id" $ Handlers.getExpenditure cfg
+  post "/expenditure" $ Handlers.createExpenditure cfg
+  post "/expenditure/:id" $ Handlers.updateExpenditure cfg
+  delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
