@@ -15,7 +15,7 @@ executable pfennig-server
   -- other-modules:       
   -- other-extensions:    
   build-depends:       aeson >=0.8
-                     , base >=4.7 && <4.8
+                     , base >=4.7 && <5
                      , bytestring >=0.10
                      , datetime >=0.2.1
                      , hasql >=0.7
