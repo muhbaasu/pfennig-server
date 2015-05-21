@@ -3,15 +3,16 @@ module Models where
 import           Control.Applicative ((<$>))
 import           Control.Monad       (mzero)
 import           Data.Aeson
-import           Data.DateTime       (DateTime)
 import           Data.Text.Lazy      (Text)
+import           Data.Time.Format    (defaultTimeLocale, formatTime)
+import           Data.Time.LocalTime (LocalTime)
 
 newtype ExpenditureId = ExpenditureId Integer deriving (Eq, Show)
 
 data Expenditure = Expenditure {
        _expId        :: ExpenditureId
-     , _expCreatedAt :: DateTime
-     , _expUpdatedAt :: DateTime
+     , _expCreatedAt :: LocalTime
+     , _expUpdatedAt :: LocalTime
      , _expFields    :: ExpenditureFields
      } deriving Show
 
@@ -35,3 +36,6 @@ instance ToJSON ExpenditureFields where
 instance FromJSON ExpenditureFields where
   parseJSON (Object v) = ExpenditureFields <$> v .: "description"
   parseJSON _ = mzero
+
+instance ToJSON LocalTime where
+  toJSON = toJSON . formatTime defaultTimeLocale "%Y%m%dT%H%M%S"
