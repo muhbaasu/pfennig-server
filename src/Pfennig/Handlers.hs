@@ -11,7 +11,7 @@ import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
 
 randomLocalTime :: LocalTime
-randomLocalTime = parseTimeOrError False defaultTimeLocale "%F" "2005 04 07"
+randomLocalTime = parseTimeOrError False defaultTimeLocale "%F" "2005-04-07"
 
 getExpenditures :: RouteHandler
 getExpenditures =
