@@ -7,7 +7,7 @@ import           Data.Text.Lazy      (Text)
 import           Data.Time.Format    (defaultTimeLocale, formatTime)
 import           Data.Time.LocalTime (LocalTime)
 
-newtype ExpenditureId = ExpenditureId Integer deriving (Eq, Show)
+newtype ExpenditureId = ExpenditureId Int deriving (Eq, Show)
 
 data Expenditure = Expenditure {
        _expId        :: ExpenditureId
