@@ -1,0 +1,11 @@
+:host = http://127.0.0.1:3000
+
+# Gets expenditures
+
+GET :host/expenditure
+
+# Creates a new expenditure
+
+POST :host/expenditure
+
+{ "description": "chello world!" }
