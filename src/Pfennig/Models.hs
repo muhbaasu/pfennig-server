@@ -3,7 +3,7 @@ module Models where
 import           Control.Applicative ((<$>))
 import           Control.Monad       (mzero)
 import           Data.Aeson
-import           Data.Text.Lazy      (Text)
+import           Data.Text           (Text)
 import           Data.Time.Format    (defaultTimeLocale, formatTime)
 import           Data.Time.LocalTime (LocalTime)
 

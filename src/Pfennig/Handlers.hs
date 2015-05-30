@@ -6,6 +6,7 @@ module Handlers where
 import           App
 import           Data.Aeson                ((.=), object)
 import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
+import qualified Data.Text                 as T
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import qualified Hasql.Postgres            as HP
@@ -16,20 +17,34 @@ import           Web.Scotty                (ActionM, json, jsonData, param,
 
 insertExpenditure :: ExpenditureFields -> H.Tx HP.Postgres s Expenditure
 insertExpenditure (ExpenditureFields description) = do
-  (id', created, updated, desc) <-
+  row <-
     H.singleEx $ [H.stmt|insert into expenditures (description)
                          values (?) returning *|] description
+  return $ rowToExpenditure row
+
+allExpenditures :: H.Tx HP.Postgres s [Expenditure]
+allExpenditures = do
+  rows <-
+    H.listEx $ [H.stmt|select * from expenditures|]
+  return $ fmap rowToExpenditure rows
+
+rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure
+rowToExpenditure (id', created, updated, desc) =
   let eid = ExpenditureId id'
-  let fields = ExpenditureFields desc
-  return $ Expenditure eid created updated fields
+      fields = ExpenditureFields desc
+  in Expenditure eid created updated fields
 
 randomLocalTime :: LocalTime
 randomLocalTime = parseTimeOrError False defaultTimeLocale "%F" "2005-04-07"
 
 getExpenditures :: RouteHandler
-getExpenditures =
-  return $ json [Expenditure (ExpenditureId 5) randomLocalTime randomLocalTime fields]
-  where fields = ExpenditureFields "Hello!"
+getExpenditures (AppConfig s) = do
+  dbResult <- s $ H.tx Nothing allExpenditures
+  case dbResult of
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status badRequest400
+    (Right expenditure) -> json expenditure
 
 getExpenditure :: RouteHandler
 getExpenditure =
