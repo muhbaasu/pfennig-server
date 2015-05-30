@@ -4,6 +4,7 @@
 module Handlers where
 
 import           App
+import           Data.Aeson                ((.=), object)
 import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
@@ -13,17 +14,21 @@ import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
 
-insertExpenditure :: Expenditure -> H.Tx HP.Postgres s ()
-insertExpenditure (Expenditure (ExpenditureId expId) createdAt updatedAt _) =
-  H.unitEx $ [H.stmt| insert into expenditures (id, created_at, updated_at)
-                      values (?, ?, ?) |] expId createdAt updatedAt
+insertExpenditure :: ExpenditureFields -> H.Tx HP.Postgres s Expenditure
+insertExpenditure (ExpenditureFields description) = do
+  (id', created, updated, desc) <-
+    H.singleEx $ [H.stmt|insert into expenditures (description)
+                         values (?) returning *|] description
+  let eid = ExpenditureId id'
+  let fields = ExpenditureFields desc
+  return $ Expenditure eid created updated fields
 
 randomLocalTime :: LocalTime
 randomLocalTime = parseTimeOrError False defaultTimeLocale "%F" "2005-04-07"
 
 getExpenditures :: RouteHandler
 getExpenditures =
-  return $ json [Expenditure (ExpenditureId 5) randomLocalTime randomLocalTime  fields]
+  return $ json [Expenditure (ExpenditureId 5) randomLocalTime randomLocalTime fields]
   where fields = ExpenditureFields "Hello!"
 
 getExpenditure :: RouteHandler
@@ -34,11 +39,14 @@ getExpenditure =
   where fields = ExpenditureFields "Hello!"
 
 createExpenditure :: RouteHandler
-createExpenditure =
-  return $ do
-    expenditure <- jsonData :: ActionM ExpenditureFields
-    json expenditure
-    status accepted202
+createExpenditure (AppConfig s) = do
+    fields <- jsonData :: ActionM ExpenditureFields
+    dbResult <- s $ H.tx Nothing (insertExpenditure fields)
+    case dbResult of
+      (Left err) -> do
+        json $ object [ "error" .= show err ]
+        status badRequest400
+      (Right expenditure) -> json expenditure
 
 updateExpenditure :: RouteHandler
 updateExpenditure =
