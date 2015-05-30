@@ -8,7 +8,9 @@ import           Data.Time.Format    (defaultTimeLocale, formatTime)
 import           Data.Time.LocalTime (LocalTime)
 
 newtype ExpenditureId = ExpenditureId Int deriving (Eq, Show)
+newtype ExpenditureTagId = ExpenditureTagId Int deriving (Eq, Show)
 
+-- | batch of expenses at a specific point in time
 data Expenditure = Expenditure {
        _expId        :: ExpenditureId
      , _expCreatedAt :: LocalTime
@@ -16,8 +18,16 @@ data Expenditure = Expenditure {
      , _expFields    :: ExpenditureFields
      } deriving Show
 
+-- | a single expense description e.g. "cellphone bill"
 data ExpenditureFields = ExpenditureFields {
        _expFldDescription :: Text
+     } deriving (Show)
+
+-- | a tag to group the expenditures by
+data ExpenditureTag = ExpenditureTag {
+       _tagId        :: ExpenditureTagId
+     , _tagTitle     :: Text
+     , _tagCreatedAt :: LocalTime
      } deriving (Show)
 
 instance ToJSON ExpenditureId where

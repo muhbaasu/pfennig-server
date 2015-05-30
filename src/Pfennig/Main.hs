@@ -33,8 +33,8 @@ main = do
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createExpendituresTable
-             , S.createLabelsTable
-             , S.createExpendituresLabelsTable]
+             , S.createTagsTable
+             , S.createExpendituresTagsTable]
 
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do

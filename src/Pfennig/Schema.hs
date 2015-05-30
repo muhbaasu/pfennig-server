@@ -21,21 +21,21 @@ createExpenditureFieldsTable =
   , updated_at timestamp with time zone not null default now()
   )|]
 
-createLabelsTable :: H.Stmt c
-createLabelsTable =
-  [H.stmt|create table labels
+createTagsTable :: H.Stmt c
+createTagsTable =
+  [H.stmt|create table tags
   ( id serial primary key
   , title varchar (40)
   , created_at timestamp with time zone not null default now()
   )|]
 
 -- |
--- Create table which maps labels to expenditures.
-createExpendituresLabelsTable :: H.Stmt c
-createExpendituresLabelsTable =
-  [H.stmt|create table expenditures_labels
+-- Create table which maps tags to expenditures.
+createExpendituresTagsTable :: H.Stmt c
+createExpendituresTagsTable =
+  [H.stmt|create table expenditures_tags
   ( id serial primary key
   , expenditure_id serial references expenditures
-  , label_id serial references labels
+  , tags_id serial references tags
   , created_at timestamp with time zone not null default now()
   )|]
