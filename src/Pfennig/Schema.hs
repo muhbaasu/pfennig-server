@@ -25,7 +25,7 @@ createTagsTable :: H.Stmt c
 createTagsTable =
   [H.stmt|create table tags
   ( id serial primary key
-  , title varchar (40)
+  , ti3tle varchar (40)
   , created_at timestamp with time zone not null default now()
   )|]
 

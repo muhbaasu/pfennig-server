@@ -17,6 +17,7 @@ executable pfennig-server
   build-depends:       aeson >=0.8
                      , base >=4.7 && <5
                      , bytestring >=0.10
+                     , errors >=2.0
                      , time >=1.5
                      , hasql >=0.7
                      , hasql-backend >=0.4

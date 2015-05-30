@@ -4,9 +4,11 @@
 module Handlers where
 
 import           App
-import           Data.Aeson                ((.=), object)
-import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
+import           Control.Error.Safe        (justErr)
+import           Data.Aeson                (ToJSON, object, (.=))
+import           Data.Bifunctor            (bimap)
 import qualified Data.Text                 as T
+import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import qualified Hasql.Postgres            as HP
@@ -28,6 +30,12 @@ allExpenditures = do
     H.listEx $ [H.stmt|select * from expenditures|]
   return $ fmap rowToExpenditure rows
 
+singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe Expenditure)
+singleExpenditure (ExpenditureId id) = do
+  row <-
+     H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] id
+  return $ fmap rowToExpenditure row
+
 rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure
 rowToExpenditure (id', created, updated, desc) =
   let eid = ExpenditureId id'
@@ -47,11 +55,14 @@ getExpenditures (AppConfig s) = do
     (Right expenditure) -> json expenditure
 
 getExpenditure :: RouteHandler
-getExpenditure =
-  return $ do
-    eid <- param "id"
-    json $ Expenditure (ExpenditureId eid) randomLocalTime randomLocalTime fields
-  where fields = ExpenditureFields "Hello!"
+getExpenditure (AppConfig s) = do
+  eid <- param "id"
+  exp <- fmap (bimap (T.pack . show) (justErr ("bla" :: T.Text))) $ s $ H.tx Nothing $ singleExpenditure $ ExpenditureId eid
+  case exp of
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status notFound404
+    (Right expenditure) ->json expenditure
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do

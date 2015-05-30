@@ -4,6 +4,10 @@
 
 GET :host/expenditure
 
+# Gets expenditures
+
+GET :host/expenditure/1
+
 # Creates a new expenditure
 
 POST :host/expenditure
