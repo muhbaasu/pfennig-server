@@ -13,3 +13,6 @@ GET :host/expenditure/1
 POST :host/expenditure
 
 { "description": "chello world!" }
+
+# Deletes expenditure
+DELETE :host/expenditure/1
