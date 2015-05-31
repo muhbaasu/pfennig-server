@@ -5,7 +5,7 @@ module Handlers where
 
 import           App
 import           Control.Error.Safe        (justErr)
-import           Data.Aeson                (ToJSON, object, (.=))
+import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import qualified Data.Text                 as T
 import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
@@ -16,6 +16,7 @@ import           Models
 import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
+
 
 insertExpenditure :: ExpenditureFields -> H.Tx HP.Postgres s Expenditure
 insertExpenditure (ExpenditureFields description) = do
@@ -31,9 +32,9 @@ allExpenditures = do
   return $ fmap rowToExpenditure rows
 
 singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe Expenditure)
-singleExpenditure (ExpenditureId id) = do
+singleExpenditure (ExpenditureId eid) = do
   row <-
-     H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] id
+     H.maybeEx $ [H.stmt|select * from expenditures where eid = ?|] eid
   return $ fmap rowToExpenditure row
 
 rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure
@@ -57,12 +58,13 @@ getExpenditures (AppConfig s) = do
 getExpenditure :: RouteHandler
 getExpenditure (AppConfig s) = do
   eid <- param "id"
-  exp <- fmap (bimap (T.pack . show) (justErr ("bla" :: T.Text))) $ s $ H.tx Nothing $ singleExpenditure $ ExpenditureId eid
-  case exp of
+  expenditure <- fmap flattenErr $ s $ H.tx Nothing $ singleExpenditure $ ExpenditureId eid
+  case expenditure of
     (Left err) -> do
       json $ object [ "error" .= show err ]
       status notFound404
-    (Right expenditure) ->json expenditure
+    (Right ex) ->json ex
+  where flattenErr = bimap (T.pack . show) (justErr ("bla" :: T.Text))
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do

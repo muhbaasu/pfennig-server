@@ -5,7 +5,6 @@
 
 module Migrations where
 
-import           Control.Applicative  ((<$>))
 import           Control.Monad        (forM_)
 import           Data.ByteString.Lazy (fromStrict)
 import           Data.Digest.Pure.SHA (sha1, showDigest)
@@ -28,7 +27,7 @@ instance Show Migration where
 
 migration :: T.Text -> [H.Stmt HP.Postgres] -> Migration
 migration name stats = Migration name (createTx stats) (computeChecksum $ head stats)
-  where createTx ss  = undefined
+  where createTx = undefined
 
 type Checksum = T.Text
 

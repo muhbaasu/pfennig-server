@@ -2,8 +2,7 @@
 
 module Schema where
 
-import qualified Hasql          as H
-import qualified Hasql.Postgres as HP
+import qualified Hasql as H
 
 createExpendituresTable :: H.Stmt c
 createExpendituresTable =
