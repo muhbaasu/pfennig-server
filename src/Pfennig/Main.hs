@@ -42,9 +42,12 @@ main = do
           setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
-migrations = [ S.createExpendituresTable
-             , S.createTagsTable
-             , S.createExpendituresTagsTable]
+migrations = [ S.createUsers
+             , S.createIntervals
+             , S.createExpenditures
+             , S.createTags
+             , S.createExpendituresTags
+             , S.createExpendituresIntervals]
 
 lucid :: Html a -> ActionM ()
 lucid h = do
@@ -59,7 +62,7 @@ setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
   get "/" $ lucid index
   get "/expenditure" $ Handlers.getExpenditures cfg
-  get "/expenditure/:id" $ Handlers.getExpenditure cfg
-  post "/expenditure" $ Handlers.createExpenditure cfg
-  post "/expenditure/:id" $ Handlers.updateExpenditure cfg
-  delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
+  -- get "/expenditure/:id" $ Handlers.getExpenditure cfg
+  -- post "/expenditure" $ Handlers.createExpenditure cfg
+  -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
+  -- delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
