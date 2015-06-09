@@ -9,6 +9,7 @@ import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import qualified Data.Text                 as T
+import           Data.Text.Encoding        (decodeUtf8)
 import           Data.Time.LocalTime       (LocalTime)
 import           Data.Word                 (Word64)
 import qualified Hasql                     as H
@@ -17,6 +18,18 @@ import           Models
 import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
+
+unpackCxError :: HP.CxError -> T.Text
+unpackCxError (HP.CantConnect err) = maybe (T.pack "Unable to connect") decodeUtf8 err
+unpackCxError (HP.UnsupportedVersion ver) = T.pack $ "Postgres version " ++ show ver ++ " is not supported."
+
+unpackTxError :: HP.TxError -> T.Text
+unpackTxError _ = T.pack "Transaction error"
+
+unpackSessionError :: H.SessionError HP.Postgres -> T.Text
+unpackSessionError (H.CxError err) = unpackCxError err
+unpackSessionError (H.TxError err) = unpackTxError err
+unpackSessionError (H.ResultError txt) = txt
 
 insertExpenditure :: ExpenditureFields -> H.Tx HP.Postgres s Expenditure
 insertExpenditure (ExpenditureFields description) = do
@@ -68,7 +81,7 @@ getExpenditure (AppConfig s) = do
       json $ object [ "error" .= show err ]
       status notFound404
     (Right ex) ->json ex
-  where mapErrText = join . bimap (T.pack . show) (justErr "Not found")
+  where mapErrText = join . bimap unpackSessionError (justErr "Not found")
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do
