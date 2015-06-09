@@ -5,6 +5,7 @@ module Handlers where
 
 import           App
 import           Control.Error.Safe        (justErr)
+import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import qualified Data.Text                 as T
@@ -67,7 +68,7 @@ getExpenditure (AppConfig s) = do
       json $ object [ "error" .= show err ]
       status notFound404
     (Right ex) ->json ex
-  where mapErrText = bimap (T.pack . show) (justErr ("bla" :: T.Text))
+  where mapErrText = join . bimap (T.pack . show) (justErr "Not found")
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do
