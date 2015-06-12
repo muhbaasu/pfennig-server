@@ -24,14 +24,28 @@ executable pfennig-server
                      , hasql-postgres >=0.10
                      , http-types >=0.8
                      , lens >=4.4
+                     , http-media >=0.1
                      , mtl >= 2.2
                      , safe >=0.3
                      , scotty >=0.9
                      , SHA >=1.6
                      , text >=1.2
                      , transformers >=0.4
-
+                     , hspec
+  exposed-modules:     NetworkHelper
   hs-source-dirs:      src/Pfennig/
   default-language:    Haskell2010
   default-extensions:  GeneralizedNewtypeDeriving
                      , OverloadedStrings
+
+Test-Suite spec
+  type:                 exitcode-stdio-1.0
+  default-language:     Haskell2010
+  hs-source-dirs:       tests, src/Pfennig
+  ghc-options:          -W -Wall
+  main-Is:              Spec.hs
+  build-depends:        base
+                      , bytestring
+                      , hspec
+                      , http-media
+                      , text
