@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module NetworkHelperSpec where
+module NetworkHelperSpec (main, spec) where
 
 import           NetworkHelper
 import           Test.Hspec
@@ -22,3 +22,7 @@ spec = do
     it "should return the clients preferred media type" $ do
       let m = matchMediaType [("Accept", "application/json;q=0.3, application/xml;q=0.7;")]
       m `shouldBe` Just applicationXML
+
+    it "should be nothing when accept header is empty" $ do
+      let m = matchMediaType [("Accept", "")]
+      m `shouldBe` Nothing
