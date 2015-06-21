@@ -3,17 +3,20 @@
 module Main where
 
 import           App
-import           Control.Exception.Base (bracket)
+import           Control.Exception.Base        (bracket)
+import           Layout
 import           Migrations
 import           View
-import           Web.Scotty             (ActionM, ScottyM, delete, get, post,
-                                         raw, scotty, setHeader)
+import           Web.Scotty                    (ActionM, ScottyM, delete, get,
+                                                middleware, post, raw, scotty,
+                                                setHeader)
 
 import qualified Handlers
-import qualified Hasql                  as H
-import qualified Hasql.Postgres         as HP
+import qualified Hasql                         as H
+import qualified Hasql.Postgres                as HP
 import           Lucid
-import qualified Schema                 as S
+import           Network.Wai.Middleware.Static (static)
+import qualified Schema                        as S
 
 main :: IO ()
 main = do
@@ -24,7 +27,7 @@ main = do
                          "pfennig"
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
-
+  renderCSS
   bracket
     (H.acquirePool postgresSettings sessionSettings)
     H.releasePool
@@ -32,7 +35,9 @@ main = do
         let session = H.session pool
         let cfg = AppConfig session
         runMigrations migrations pool
-        scotty 3000 $ setupRoutes cfg)
+        scotty 3000 $ do
+          setupMiddleware
+          setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createExpendituresTable
@@ -43,6 +48,10 @@ lucid :: Html a -> ActionM ()
 lucid h = do
   setHeader "Content-Type" "text/html"
   raw . renderBS  $ h
+
+setupMiddleware :: ScottyM ()
+setupMiddleware = do
+  middleware static
 
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
