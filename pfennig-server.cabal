@@ -24,6 +24,7 @@ executable pfennig-server
                      , hasql-postgres >=0.10
                      , http-types >=0.8
                      , lens >=4.4
+                     , lucid >=2.9
                      , http-media >=0.1
                      , mtl >= 2.2
                      , safe >=0.3

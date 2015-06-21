@@ -5,11 +5,14 @@ module Main where
 import           App
 import           Control.Exception.Base (bracket)
 import           Migrations
-import           Web.Scotty             (ScottyM, delete, get, post, scotty)
+import           View
+import           Web.Scotty             (ActionM, ScottyM, delete, get, post,
+                                         raw, scotty, setHeader)
 
 import qualified Handlers
 import qualified Hasql                  as H
 import qualified Hasql.Postgres         as HP
+import           Lucid
 import qualified Schema                 as S
 
 main :: IO ()
@@ -36,8 +39,14 @@ migrations = [ S.createExpendituresTable
              , S.createTagsTable
              , S.createExpendituresTagsTable]
 
+lucid :: Html a -> ActionM ()
+lucid h = do
+  setHeader "Content-Type" "text/html"
+  raw . renderBS  $ h
+
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
+  get "/" $ lucid index
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   post "/expenditure" $ Handlers.createExpenditure cfg
