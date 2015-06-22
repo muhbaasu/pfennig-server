@@ -15,7 +15,8 @@ import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
 import           Lucid
-import           Network.Wai.Middleware.Static (static)
+import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
+                                                initCaching, static')
 import qualified Schema                        as S
 
 main :: IO ()
@@ -28,6 +29,7 @@ main = do
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
   renderCSS
+  cache <- initCaching PublicStaticCaching
   bracket
     (H.acquirePool postgresSettings sessionSettings)
     H.releasePool
@@ -36,7 +38,7 @@ main = do
         let cfg = AppConfig session
         runMigrations migrations pool
         scotty 3000 $ do
-          setupMiddleware
+          setupMiddleware cache
           setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
@@ -49,9 +51,9 @@ lucid h = do
   setHeader "Content-Type" "text/html"
   raw . renderBS  $ h
 
-setupMiddleware :: ScottyM ()
-setupMiddleware = do
-  middleware static
+setupMiddleware :: CacheContainer -> ScottyM ()
+setupMiddleware cache = do
+  middleware $ static' cache
 
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
