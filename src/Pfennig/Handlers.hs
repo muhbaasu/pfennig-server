@@ -9,6 +9,7 @@ import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (ToJSON, object, (.=))
 import           Data.Bifunctor            (bimap)
+import           Data.Scientific           (Scientific)
 import qualified Data.Text                 as T
 import           Data.Text.Encoding        (decodeUtf8)
 import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
@@ -21,227 +22,97 @@ import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
 
--- <<<<<<< HEAD
--- -- <<<<<<< HEAD
--- -- unpackCxError :: HP.CxError -> T.Text
--- -- unpackCxError (HP.CantConnect err) = maybe (T.pack "Unable to connect") decodeUtf8 err
--- -- unpackCxError (HP.UnsupportedVersion ver) = T.pack $ "Postgres version " ++ show ver ++ " is not supported."
+unpackCxError :: HP.CxError -> T.Text
+unpackCxError (HP.CantConnect err) = maybe (T.pack "Unable to connect") decodeUtf8 err
+unpackCxError (HP.UnsupportedVersion ver) = T.pack $ "Postgres version " ++ show ver ++ " is not supported."
 
--- -- unpackTxError :: HP.TxError -> T.Text
--- -- unpackTxError _ = T.pack "Transaction error"
+unpackTxError :: HP.TxError -> T.Text
+unpackTxError _ = T.pack "Transaction error"
 
--- -- unpackSessionError :: H.SessionError HP.Postgres -> T.Text
--- -- unpackSessionError (H.CxError err) = unpackCxError err
--- -- unpackSessionError (H.TxError err) = unpackTxError err
--- -- unpackSessionError (H.ResultError txt) = txt
+unpackSessionError :: H.SessionError HP.Postgres -> T.Text
+unpackSessionError (H.CxError err) = unpackCxError err
+unpackSessionError (H.TxError err) = unpackTxError err
+unpackSessionError (H.ResultError txt) = txt
 
--- -- insertExpenditure :: ExpenditureFields -> H.Tx HP.Postgres s Expenditure
--- -- insertExpenditure (ExpenditureFields description) = do
--- -- =======
--- -- insertExpenditure :: (ExpenditureFields 'Database)
--- --                   -> H.Tx HP.Postgres s (Expenditure 'Database)
--- -- insertExpenditure (ExpenditureFields description _) = do
--- -- >>>>>>> Add basic implementation of `DataKind'ed refs
--- --   row <-
--- --     H.singleEx $ [H.stmt|insert into expenditures (description)
--- --                          values (?) returning *|] description
--- --   return $ rowToExpenditure row
+insertExpenditure :: (ExpenditureFields 'Database)
+                   -> H.Tx HP.Postgres s (Expenditure 'Database)
+insertExpenditure (ExpenditureFields description _) = do
+  row <-
+    H.singleEx $ [H.stmt|insert into expenditures (description)
+                         values (?) returning *|] description
+  return $ rowToExpenditure row
 
--- -- allExpenditures :: H.Tx HP.Postgres s [Expenditure 'Database]
--- -- allExpenditures = do
--- --   rows <-
--- --     H.listEx $ [H.stmt|select * from expenditures|]
--- --   return $ fmap rowToExpenditure rows
+singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe (Expenditure 'Database))
+singleExpenditure (ExpenditureId eid) = do
+  row <-
+         H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] eid
+  return $ fmap rowToExpenditure row
 
--- -- <<<<<<< HEAD
--- -- singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe Expenditure)
--- -- singleExpenditure (ExpenditureId eid) = do
--- --   row <-
--- --      H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] eid
--- --   return $ fmap rowToExpenditure row
+delExpenditure :: ExpenditureId -> H.Tx HP.Postgres s Word64
+delExpenditure (ExpenditureId eid) = do
+  count <-
+          H.countEx $ [H.stmt|delete from expenditures where id = ?|] eid
+  return count
 
--- -- delExpenditure :: ExpenditureId -> H.Tx HP.Postgres s Word64
--- -- delExpenditure (ExpenditureId eid) = do
--- --   count <-
--- --           H.countEx $ [H.stmt|delete from expenditures where id = ?|] eid
--- --   return count
+rowToExpenditure :: (Int, LocalTime, LocalTime, Int, T.Text, Scientific) -> Expenditure 'Database
+rowToExpenditure (id', created, updated, userId, name, amount) =
+  let eid = ExpenditureId id'
+      fields = ExpenditureFields name []
+  in Expenditure eid created updated fields
+
+getExpenditure :: RouteHandler
+getExpenditure (AppConfig s) = do
+  eid <- param "id"
+  expenditure <- fmap mapErrText $ s $ H.tx Nothing $ singleExpenditure $ ExpenditureId eid
+  case expenditure of
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status notFound404
+    (Right ex) ->json ex
+  where mapErrText = join . bimap unpackSessionError (justErr "Not found")
+
+createExpenditure :: RouteHandler
+createExpenditure (AppConfig s) = do
+    fields <- jsonData :: ActionM (ExpenditureFields 'Database)
+    dbResult <- s $ H.tx Nothing (insertExpenditure fields)
+    case dbResult of
+      (Left err) -> do
+        json $ object [ "error" .= show err ]
+        status badRequest400
+      (Right expenditure) -> json expenditure
 
 
--- -- rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure
--- -- =======
--- -- rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure 'Database
--- -- >>>>>>> Add basic implementation of `DataKind'ed refs
--- -- rowToExpenditure (id', created, updated, desc) =
--- --   let eid = ExpenditureId id'
--- --       fields = ExpenditureFields desc []
--- --   in Expenditure eid created updated fields
+allExpenditures :: H.Tx HP.Postgres s [Expenditure 'Database]
+allExpenditures = do
+  rows <-
+    H.listEx $ [H.stmt|select * from expenditures|]
+  return $ fmap rowToExpenditure rows
 
--- -- getExpenditures :: RouteHandler
--- -- getExpenditures (AppConfig s) = do
--- --   dbResult <- s $ H.tx Nothing allExpenditures
--- --   case dbResult of
--- --     (Left err) -> do
--- --       json $ object [ "error" .= show err ]
--- --       status badRequest400
--- --     (Right expenditure) -> json expenditure
+getExpenditures :: RouteHandler
+getExpenditures (AppConfig s) = do
+  dbResult <- s $ H.tx Nothing allExpenditures
+  case dbResult of
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status badRequest400
+    (Right expenditure) -> json expenditure
 
--- -- getExpenditure :: RouteHandler
--- -- <<<<<<< HEAD
--- -- getExpenditure (AppConfig s) = do
--- --   eid <- param "id"
--- --   expenditure <- fmap mapErrText $ s $ H.tx Nothing $ singleExpenditure $ ExpenditureId eid
--- --   case expenditure of
--- --     (Left err) -> do
--- --       json $ object [ "error" .= show err ]
--- --       status notFound404
--- --     (Right ex) ->json ex
--- --   where mapErrText = join . bimap unpackSessionError (justErr "Not found")
--- -- =======
--- -- getExpenditure =
--- --   return $ do
--- --     eid <- param "id"
--- --     json $ Expenditure (ExpenditureId eid) randomLocalTime randomLocalTime fields
--- --   where fields = ExpenditureFields "Hello!" []
--- -- >>>>>>> Add basic implementation of `DataKind'ed refs
+updateExpenditure :: RouteHandler
+updateExpenditure =
+  return $ do
+    _ <- param "id" :: ActionM Integer
+    expenditure <- jsonData :: ActionM (ExpenditureFields 'Database)
+    json expenditure
+    status accepted202
 
--- -- createExpenditure :: RouteHandler
--- -- createExpenditure (AppConfig s) = do
--- --     fields <- jsonData :: ActionM (ExpenditureFields 'Database)
--- =======
--- toJsonMaybe :: ToJSON a => Maybe a -> ActionM ()
--- toJsonMaybe a =
---   case a of
---     Nothing ->
---       status notFound404
---     Just val -> json val
-
--- insertExpenditure :: (ExpenditureFields 'Database)
---                   -> H.Tx HP.Postgres s (Expenditure 'Database)
--- insertExpenditure (ExpenditureFields description _) = do
---   row <-
---     H.singleEx $ [H.stmt|insert into expenditures (description)
---                          values (?) returning *|] description
---   return $ rowToExpenditure row
-
--- allExpenditures :: H.Tx HP.Postgres s [Expenditure 'Database]
--- allExpenditures = do
---   rows <-
---     H.listEx $ [H.stmt|select * from expenditures|]
---   return $ fmap rowToExpenditure rows
-
--- -- singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe Expenditure)
--- -- singleExpenditure (ExpenditureId id) = do
--- --   row <-
--- --      H.maybeEx $ [H.stmt|select from expenditures where id = ?|] id
--- --   return $ fmap rowToExpenditure row
-
--- rowToExpenditure :: (Int, LocalTime, LocalTime, T.Text) -> Expenditure 'Database
--- rowToExpenditure (id', created, updated, desc) =
---   let eid = ExpenditureId id'
---       fields = ExpenditureFields desc []
---   in Expenditure eid created updated fields
-
--- randomLocalTime :: LocalTime
--- randomLocalTime = parseTimeOrError False defaultTimeLocale "%F" "2005-04-07"
-
--- getExpenditures :: RouteHandler
--- getExpenditures (AppConfig s) = do
---   dbResult <- s $ H.tx Nothing allExpenditures
---   case dbResult of
---     (Left err) -> do
---       json $ object [ "error" .= show err ]
---       status badRequest400
---     (Right expenditure) -> json expenditure
-
--- getExpenditure :: RouteHandler
--- getExpenditure =
---   return $ do
---     eid <- param "id"
---     json $ Expenditure (ExpenditureId eid) randomLocalTime randomLocalTime fields
---   where fields = ExpenditureFields "Hello!" []
-
--- createExpenditure :: RouteHandler
--- createExpenditure (AppConfig s) = do
---     fields <- jsonData :: ActionM (ExpenditureFields 'Database)
---     dbResult <- s $ H.tx Nothing (insertExpenditure fields)
---     case dbResult of
---       (Left err) -> do
---         json $ object [ "error" .= show err ]
---         status badRequest400
---       (Right expenditure) -> json expenditure
-
--- updateExpenditure :: RouteHandler
--- updateExpenditure =
---   return $ do
---     _ <- param "id" :: ActionM Integer
---     expenditure <- jsonData :: ActionM (ExpenditureFields 'Database)
---     json expenditure
---     status accepted202
-
--- -- getExpenditure :: RouteHandler
--- -- getExpenditure (AppConfig s) = do
--- --   eid <- param "id"
--- --   exp <- s $ H.tx Nothing $ singleExpenditure eid
--- --   r <- return $ do
--- --     bimap (T.pack . show) (justErr "not found") exp
--- --   case r of
--- --    (Left err) -> do
--- --      json $ object [ "error" .= show err ]
--- --      status badRequest400
--- --    (Right expenditure) -> json expenditure
-
--- --   --let r = exp >>= (justErr "not found")
--- --   --case r of
--- --   --  (Left err) -> do
--- --   --     json $ object [ "error" .= show err ]
--- --   --     status badRequest400
--- --   --  (Right expenditure) -> json expenditure
-
--- -- --  case exp of
--- -- --    Nothing -> status notFound404
--- -- --    Just val -> json val
--- -- --  toJsonMaybe exp
--- -- --   json $ Expenditure (ExpenditureId eid) randomLocalTime randomLocalTime fields
--- -- --  where fields = ExpenditureFields "Hello!"
-
--- -- createExpenditure :: RouteHandler
--- -- createExpenditure (AppConfig s) = do
--- --     fields <- jsonData :: ActionM ExpenditureFields
--- >>>>>>> Rework schema
--- --     dbResult <- s $ H.tx Nothing (insertExpenditure fields)
--- --     case dbResult of
--- --       (Left err) -> do
--- --         json $ object [ "error" .= show err ]
--- --         status badRequest400
--- --       (Right expenditure) -> json expenditure
-
--- -- updateExpenditure :: RouteHandler
--- -- updateExpenditure =
--- --   return $ do
--- --     _ <- param "id" :: ActionM Integer
--- <<<<<<< HEAD
--- --     expenditure <- jsonData :: ActionM (ExpenditureFields 'Database)
--- =======
--- --     expenditure <- jsonData :: ActionM ExpenditureFields
--- >>>>>>> Rework schema
--- --     json expenditure
--- --     status accepted202
-
--- -- deleteExpenditure :: RouteHandler
--- <<<<<<< HEAD
--- -- deleteExpenditure (AppConfig s) = do
--- --   eid <- param "id" :: ActionM Int
--- --   count <- s $ H.tx Nothing $ delExpenditure $ ExpenditureId eid -- count should probably be checked
--- --   case count of
--- --     (Right 1) -> status accepted202
--- --     (Right 0) -> status notFound404
--- --     (Left err) -> do
--- --       json $ object [ "error" .= show err ]
--- --       status badRequest400
--- --     _ -> status internalServerError500 -- something weird happened
--- =======
--- -- deleteExpenditure =
--- --   return $ do
--- --     _ <- param "id" :: ActionM Integer
--- --     status accepted202
--- >>>>>>> Rework schema
+deleteExpenditure :: RouteHandler
+deleteExpenditure (AppConfig s) = do
+  eid <- param "id" :: ActionM Int
+  count <- s $ H.tx Nothing $ delExpenditure $ ExpenditureId eid -- count should probably be checked
+  case count of
+    (Right 1) -> status accepted202
+    (Right 0) -> status notFound404
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status badRequest400
+    _ -> status internalServerError500 -- something weird happened

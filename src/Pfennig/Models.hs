@@ -9,9 +9,12 @@ import           Data.Text           (Text)
 import           Data.Time.Format    (defaultTimeLocale, formatTime)
 import           Data.Time.LocalTime (LocalTime)
 
-data Reference = Database
-               | REST
-               | NoRef
+data Reference = -- | Might still require joins
+                 Database
+                 -- | URI
+                 | REST
+                 -- | Fully materialized object
+                 | NoRef
 
 type family RefType (a :: *) (r :: Reference) :: * where
   RefType (Expenditure r) Database = ExpenditureId
