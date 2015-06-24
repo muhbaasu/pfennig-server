@@ -7,12 +7,11 @@ module Handlers where
 import           App
 import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
-import           Data.Aeson                (ToJSON, object, (.=))
+import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import           Data.Scientific           (Scientific)
 import qualified Data.Text                 as T
 import           Data.Text.Encoding        (decodeUtf8)
-import           Data.Time.Format          (defaultTimeLocale, parseTimeOrError)
 import           Data.Time.LocalTime       (LocalTime)
 import           Data.Word                 (Word64)
 import qualified Hasql                     as H
@@ -58,7 +57,8 @@ rowToExpenditure :: (Int, LocalTime, LocalTime, Int, T.Text, Scientific) -> Expe
 rowToExpenditure (id', created, updated, userId, name, amount) =
   let eid = ExpenditureId id'
       fields = ExpenditureFields name []
-  in Expenditure eid created updated fields
+      user = UserId userId
+  in Expenditure eid created updated name amount user fields
 
 getExpenditure :: RouteHandler
 getExpenditure (AppConfig s) = do
