@@ -14,10 +14,60 @@ renderCSS = do
 
 pfennig :: Css
 pfennig = do
+  html ? do
+    boxSizing borderBox
+
+  star ? do
+    boxSizing inherit
+
+  base'
+  forms
+
+  login
+
   body ? do
     fstFontFamily
 
+base' :: Css
+base' = do
+  ".row" ? do
+    display flex
+    alignItems center
+    flexDirection row
+
+  ".column" ? do
+    display flex
+    alignItems center
+    flexDirection column
+
+  ".center" ? do
+    display flex
+    height $ pct 100
+    width $ pct 100
+    justifyContent center
+    alignItems center
+
+forms :: Css
+forms = do
+  form ? do
+    background red
+    paddingAll $ rem 0.25
+
+  form |> ".row" ? do
+    justifyContent spaceBetween
+    paddingAll $ rem 0.25
+  ".row" |> input ? do
+    marginLeft $ rem 1
+
+login :: Css
+login = do
+  ".login" ? do
+    background transparent
+
 fstFontFamily = fontFamily ["Roboto"] [sansSerif]
+
+paddingAll :: Size a -> Css
+paddingAll s' = padding s' s' s' s'
 
 --------------------------------------------------------------------------------
 --- http://csswizardry.com/2012/02/pragmatic-practical-font-sizing-in-css/
