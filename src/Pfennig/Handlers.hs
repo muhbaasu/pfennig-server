@@ -2,14 +2,15 @@
 module Handlers where
 
 import           App
+import           Models
+import           Queries                   as Q
+
 import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import qualified Hasql                     as H
-import           Models
 import           Network.HTTP.Types.Status
-import           Queries
 import           Web.Scotty                (ActionM, json, jsonData, param,
                                             status)
 
@@ -28,7 +29,7 @@ getExpenditure (AppConfig s) = do
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do
     fields <- jsonData :: ActionM (ExpenditureFields 'Database)
-    dbResult <- s $ H.tx Nothing (insertExpenditure fields)
+    dbResult <- s $ H.tx Nothing (Q.insertExpenditure fields)
     case dbResult of
       (Left err) -> do
         json $ object [ "error" .= show err ]
@@ -37,7 +38,7 @@ createExpenditure (AppConfig s) = do
 
 getExpenditures :: RouteHandler
 getExpenditures (AppConfig s) = do
-  dbResult <- s $ H.tx Nothing allExpenditures
+  dbResult <- s $ H.tx Nothing Q.allExpenditures
   case dbResult of
     (Left err) -> do
       json $ object [ "error" .= show err ]
@@ -55,7 +56,7 @@ updateExpenditure =
 deleteExpenditure :: RouteHandler
 deleteExpenditure (AppConfig s) = do
   eid <- param "id" :: ActionM Int
-  count <- s $ H.tx Nothing $ delExpenditure $ ExpenditureId eid -- count should probably be checked
+  count <- s $ H.tx Nothing $ Q.deleteExpenditure $ ExpenditureId eid -- count should probably be checked
   case count of
     (Right 1) -> status accepted202
     (Right 0) -> status notFound404

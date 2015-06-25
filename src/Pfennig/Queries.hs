@@ -43,18 +43,14 @@ insertExpenditure (ExpenditureFields description _) = do
 
 singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe (Expenditure 'Database))
 singleExpenditure (ExpenditureId eid) = do
-  row <-
-         H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] eid
+  row <- H.maybeEx $ [H.stmt|select * from expenditures where id = ?|] eid
   return $ fmap rowToExpenditure row
 
 allExpenditures :: H.Tx HP.Postgres s [Expenditure 'Database]
 allExpenditures = do
-  rows <-
-    H.listEx $ [H.stmt|select * from expenditures|]
+  rows <- H.listEx $ [H.stmt|select * from expenditures|]
   return $ fmap rowToExpenditure rows
 
-delExpenditure :: ExpenditureId -> H.Tx HP.Postgres s Word64
-delExpenditure (ExpenditureId eid) = do
-  count <-
-          H.countEx $ [H.stmt|delete from expenditures where id = ?|] eid
-  return count
+deleteExpenditure :: ExpenditureId -> H.Tx HP.Postgres s Word64
+deleteExpenditure (ExpenditureId eid) =
+  H.countEx $ [H.stmt|delete from expenditures where id = ?|] eid
