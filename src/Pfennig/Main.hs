@@ -28,7 +28,6 @@ main = do
                          "pfennig"
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
-  renderCSS
   cache <- initCaching PublicStaticCaching
   bracket
     (H.acquirePool postgresSettings sessionSettings)
@@ -61,8 +60,9 @@ setupMiddleware cache = do
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
   get "/" $ lucid index
+  get "/assets/generated.css" $ Handlers.getCss cfg
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   -- post "/expenditure" $ Handlers.createExpenditure cfg
   -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
-  -- delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
+  delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg

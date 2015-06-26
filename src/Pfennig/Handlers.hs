@@ -2,6 +2,7 @@
 module Handlers where
 
 import           App
+import           Layout                    (readCSS)
 import           Models
 import           Queries                   as Q
 
@@ -9,11 +10,19 @@ import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
+import           Data.Text
 import qualified Hasql                     as H
 import           Network.HTTP.Types.Status
-import           Web.Scotty                (ActionM, json, jsonData, param,
-                                            status)
+import           Web.Scotty                (ActionM, json, jsonData, param, raw,
+                                            setHeader, status)
 
+getCss :: RouteHandler
+getCss (AppConfig s) = do
+  raw readCSS
+  setHeader "Content-Type" "text/css"
+  setHeader "Cache-Control" "no-transform,public,max-age=300,s-maxage=900"
+  status ok200
+  return ()
 
 getExpenditure :: RouteHandler
 getExpenditure (AppConfig s) = do

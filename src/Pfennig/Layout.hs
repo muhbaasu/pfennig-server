@@ -2,15 +2,21 @@
 
 module Layout where
 
-import           Clay              hiding ((**))
+import           Clay                    hiding ((**))
+import           Data.ByteString.Lazy    (ByteString)
 import           Data.Monoid
-import qualified Data.Text.Lazy.IO as LIO
-import           Prelude           hiding (rem)
+import           Data.Text.Internal.Lazy
+import           Data.Text.Lazy.Encoding (encodeUtf8)
+import qualified Data.Text.Lazy.IO       as LIO
+import           Prelude                 hiding (rem)
 
 renderCSS :: IO ()
 renderCSS = do
   let css = render pfennig
   LIO.writeFile "./assets/generated.css" css
+
+readCSS :: ByteString
+readCSS = encodeUtf8 $ render pfennig
 
 pfennig :: Css
 pfennig = do
