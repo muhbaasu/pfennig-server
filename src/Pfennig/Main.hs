@@ -29,6 +29,7 @@ main = do
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
   cache <- initCaching PublicStaticCaching
+
   bracket
     (H.acquirePool postgresSettings sessionSettings)
     H.releasePool
@@ -38,6 +39,7 @@ main = do
         runMigrations migrations pool
         scotty 3000 $ do
           setupMiddleware cache
+          setupAssets cfg
           setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
@@ -57,10 +59,13 @@ setupMiddleware :: CacheContainer -> ScottyM ()
 setupMiddleware cache = do
   middleware $ static' cache
 
+setupAssets :: AppConfig -> ScottyM ()
+setupAssets cfg = do
+  get "/assets/generated.css" $ Handlers.getCss readCSS cfg
+
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do
   get "/" $ lucid index
-  get "/assets/generated.css" $ Handlers.getCss cfg
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   -- post "/expenditure" $ Handlers.createExpenditure cfg

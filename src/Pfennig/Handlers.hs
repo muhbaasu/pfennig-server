@@ -10,15 +10,16 @@ import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
+import           Data.ByteString.Lazy      (ByteString)
 import           Data.Text
 import qualified Hasql                     as H
 import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param, raw,
                                             setHeader, status)
 
-getCss :: RouteHandler
-getCss (AppConfig s) = do
-  raw readCSS
+getCss :: ByteString -> RouteHandler
+getCss css (AppConfig s) = do
+  raw css
   setHeader "Content-Type" "text/css"
   setHeader "Cache-Control" "no-transform,public,max-age=300,s-maxage=900"
   status ok200
