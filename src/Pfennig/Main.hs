@@ -16,7 +16,8 @@ import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
 import           Lucid
 import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
-                                                initCaching, static')
+                                                hasPrefix, initCaching,
+                                                staticPolicy')
 import qualified Schema                        as S
 
 main :: IO ()
@@ -39,7 +40,7 @@ main = do
         runMigrations migrations pool
         scotty 3000 $ do
           setupMiddleware cache
-          setupAssets cfg
+          setupAssets
           setupRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
@@ -57,11 +58,11 @@ lucid h = do
 
 setupMiddleware :: CacheContainer -> ScottyM ()
 setupMiddleware cache = do
-  middleware $ static' cache
+  middleware $ staticPolicy' cache $ hasPrefix "assets/"
 
-setupAssets :: AppConfig -> ScottyM ()
-setupAssets cfg = do
-  get "/assets/generated.css" $ Handlers.getCss readCSS cfg
+setupAssets :: ScottyM ()
+setupAssets = do
+  get "/assets/generated.css" $ Handlers.getCss readCSS
 
 setupRoutes :: AppConfig -> ScottyM ()
 setupRoutes cfg = do

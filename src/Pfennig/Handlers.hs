@@ -17,8 +17,8 @@ import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param, raw,
                                             setHeader, status)
 
-getCss :: ByteString -> RouteHandler
-getCss css (AppConfig s) = do
+getCss :: ByteString -> ActionM ()
+getCss css = do
   raw css
   setHeader "Content-Type" "text/css"
   setHeader "Cache-Control" "no-transform,public,max-age=300,s-maxage=900"
