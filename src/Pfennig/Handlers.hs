@@ -39,8 +39,8 @@ getExpenditure (AppConfig s) = do
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do
-    fields <- jsonData :: ActionM (ExpenditureFields 'Database)
-    dbResult <- s $ H.tx Nothing (Q.insertExpenditure fields)
+    exp <- jsonData :: ActionM NewExpenditure
+    dbResult <- s $ H.tx Nothing (Q.insertExpenditure (UserId 1) exp)
     case dbResult of
       (Left err) -> do
         json $ object [ "error" .= show err ]
@@ -67,13 +67,13 @@ getExpendituresBetween (AppConfig s) = do
       status badRequest400
     (Right expenditure) -> json expenditure
 
-updateExpenditure :: RouteHandler
-updateExpenditure =
-  return $ do
-    _ <- param "id" :: ActionM Integer
-    expenditure <- jsonData :: ActionM (ExpenditureFields 'Database)
-    json expenditure
-    status accepted202
+--updateExpenditure :: RouteHandler
+--updateExpenditure =
+--  return $ do
+--    _ <- param "id" :: ActionM Integer
+--    expenditure <- jsonData :: ActionM (Expenditure 'Database)
+--    json expenditure
+--    status accepted202
 
 deleteExpenditure :: RouteHandler
 deleteExpenditure (AppConfig s) = do

@@ -16,7 +16,7 @@ GET :host/expenditure/2000-01-01/2025-01-02
 
 POST :host/expenditure
 
-{ "description": "chello world!" }
+{ "name": "chello world!", "amount": 10.0 }
 
 # Deletes expenditure
 DELETE :host/expenditure/1

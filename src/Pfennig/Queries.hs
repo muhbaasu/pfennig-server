@@ -17,9 +17,9 @@ import qualified Hasql.Postgres      as HP
 rowToExpenditure :: (Int, LocalTime, LocalTime, Int, T.Text, Scientific) -> Expenditure 'Database
 rowToExpenditure (id', created, updated, userId, name, amount) =
   let eid = ExpenditureId id'
-      fields = ExpenditureFields name []
+--      fields = ExpenditureFields name []
       user = UserId userId
-  in Expenditure eid created updated name amount user fields
+  in Expenditure eid created updated name amount user -- fields
 
 unpackCxError :: HP.CxError -> T.Text
 unpackCxError (HP.CantConnect err) = maybe (T.pack "Unable to connect") decodeUtf8 err
@@ -33,12 +33,12 @@ unpackSessionError (H.CxError err) = unpackCxError err
 unpackSessionError (H.TxError err) = unpackTxError err
 unpackSessionError (H.ResultError txt) = txt
 
-insertExpenditure :: (ExpenditureFields 'Database)
+insertExpenditure :: UserId -> NewExpenditure
                    -> H.Tx HP.Postgres s (Expenditure 'Database)
-insertExpenditure (ExpenditureFields description _) = do
+insertExpenditure (UserId uid) (NewExpenditure name amount) = do
   row <-
-    H.singleEx $ [H.stmt|insert into expenditures (description)
-                         values (?) returning *|] description
+    H.singleEx $ [H.stmt|insert into expenditures (user_id, name, amount)
+                         values (?, ?, ?) returning *|] uid name amount
   return $ rowToExpenditure row
 
 singleExpenditure :: ExpenditureId -> H.Tx HP.Postgres s (Maybe (Expenditure 'Database))

@@ -38,15 +38,13 @@ data Expenditure (r :: Reference)=
     , _expName      :: Text
     , _expAmount    :: Scientific
     , _expUser      :: RefType User r
-    , _expFields    :: ExpenditureFields r
     }
 
--- | a single expense description e.g. "cellphone bill"
-data ExpenditureFields (r :: Reference) =
-  ExpenditureFields {
-      _expFldDescription :: Text
-    , _expFldTags        :: [ExpenditureTag r]
-    } deriving (Show)
+data NewExpenditure=
+  NewExpenditure {
+      _nExpName   :: Text
+    , _nExpAmount :: Scientific
+    }
 
 -- | a tag to group the expenditures by
 data ExpenditureTag (r :: Reference) =
@@ -76,16 +74,12 @@ instance ToJSON (Expenditure r) where
                         , "createdAt"   .= _expCreatedAt label
                         , "updatedAt"   .= _expUpdatedAt label
                         , "name"        .= _expName label
-                        , "amount"      .= _expAmount label
-                        , "description" .= desc ]
- --                     , "user"        .= _expUser label
-     where desc = _expFldDescription $ _expFields label
+                        , "amount"      .= _expAmount label ]
 
-instance ToJSON (ExpenditureFields r) where
-  toJSON (ExpenditureFields desc tags) = object [ "description" .= desc ]
-
-instance FromJSON (ExpenditureFields r) where
-  parseJSON (Object v) = ExpenditureFields <$> v .: "description" <*> pure []
+instance FromJSON NewExpenditure where
+  parseJSON (Object v) = NewExpenditure <$>
+                          v .: "name" <*>
+                          v .: "amount"
   parseJSON _ = mzero
 
 instance ToJSON User where
