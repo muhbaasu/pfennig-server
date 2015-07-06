@@ -54,3 +54,11 @@ allExpenditures = do
 deleteExpenditure :: ExpenditureId -> H.Tx HP.Postgres s Word64
 deleteExpenditure (ExpenditureId eid) =
   H.countEx $ [H.stmt|delete from expenditures where id = ?|] eid
+
+type TimeRange = (LocalTime, LocalTime)
+allExpendituresBetween :: TimeRange -> H.Tx HP.Postgres s [Expenditure 'Database]
+allExpendituresBetween (start, end) = do
+  rows <- H.listEx $ [H.stmt|select * from expenditures
+                             where (created_at, created_at)
+                             overlaps (?, ?) |] start end
+  return $ fmap rowToExpenditure rows

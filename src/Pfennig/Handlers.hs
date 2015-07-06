@@ -12,6 +12,7 @@ import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import           Data.ByteString.Lazy      (ByteString)
 import           Data.Text
+import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, json, jsonData, param, raw,
@@ -50,6 +51,17 @@ getExpenditures :: RouteHandler
 getExpenditures (AppConfig s) = do
   dbResult <- s $ H.tx Nothing Q.allExpenditures
   case dbResult of
+    (Left err) -> do
+      json $ object [ "error" .= show err ]
+      status badRequest400
+    (Right expenditure) -> json expenditure
+
+getExpendituresBetween :: RouteHandler
+getExpendituresBetween (AppConfig s) = do
+  start  <- param "start" :: ActionM LocalTime
+  end    <- param "end" :: ActionM LocalTime
+  res    <- s $ H.tx Nothing $ Q.allExpendituresBetween (start, end)
+  case res of
     (Left err) -> do
       json $ object [ "error" .= show err ]
       status badRequest400

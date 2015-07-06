@@ -7,8 +7,11 @@ import           Control.Monad       (mzero)
 import           Data.Aeson
 import           Data.Scientific     (Scientific)
 import           Data.Text           (Text)
-import           Data.Time.Format    (defaultTimeLocale, formatTime)
+import           Data.Text.Lazy      (unpack)
+import           Data.Time.Format    (defaultTimeLocale, formatTime,
+                                      iso8601DateFormat, parseTimeM)
 import           Data.Time.LocalTime (LocalTime)
+import           Web.Scotty          (Parsable (..))
 
 data Reference = -- | Might still require joins
                  Database
@@ -94,3 +97,7 @@ instance ToJSON User where
 
 instance ToJSON LocalTime where
   toJSON = toJSON . formatTime defaultTimeLocale "%Y%m%dT%H%M%S"
+
+instance Parsable LocalTime where
+  parseParam p = parseTimeM False defaultTimeLocale timeFormat $ unpack p
+    where timeFormat = iso8601DateFormat Nothing

@@ -69,6 +69,7 @@ setupRoutes cfg = do
   get "/" $ lucid index
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
+  get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
   -- post "/expenditure" $ Handlers.createExpenditure cfg
   -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
   delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
