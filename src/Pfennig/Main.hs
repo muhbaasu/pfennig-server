@@ -4,7 +4,7 @@ module Main where
 
 import           App
 import           Control.Exception.Base        (bracket)
-import           Layout
+import           Layout                        (readCSS)
 import           Migrations
 import           View
 import           Web.Scotty                    (ActionM, ScottyM, delete, get,
@@ -41,7 +41,8 @@ main = do
         scotty 3000 $ do
           setupMiddleware cache
           setupAssets
-          setupRoutes cfg)
+          setupViewRoutes
+          setupAPIRoutes cfg)
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createUsers
@@ -64,9 +65,13 @@ setupAssets :: ScottyM ()
 setupAssets = do
   get "/assets/generated.css" $ Handlers.getCss readCSS
 
-setupRoutes :: AppConfig -> ScottyM ()
-setupRoutes cfg = do
-  get "/" $ lucid index
+setupViewRoutes :: ScottyM ()
+setupViewRoutes = do
+  get "/" $ lucid $ index login
+  get "/register" $ lucid $ index register
+
+setupAPIRoutes :: AppConfig -> ScottyM ()
+setupAPIRoutes cfg = do
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg

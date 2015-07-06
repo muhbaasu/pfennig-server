@@ -5,10 +5,10 @@ module View where
 
 import           Lucid
 
-index :: Html ()
-index = head_ $ do
+index :: Html () -> Html ()
+index bd = head_ $ do
   head_ hd
-  body_ login
+  body_ bd
 
 hd :: Html ()
 hd = do
@@ -42,7 +42,22 @@ login =
           label_ [for_ "remember"] "Remember me"
           input_ [id_ "remember", type_ "checkbox"]
         div_ $ do
-          a_ [href_ "#"] "Forgot password?"
+          a_ [href_ "/register"] "Register"
 
       div_ [class_ "row"] $ do
+        a_ [href_ "#"] "Forgot password?"
         button_ [type_ "submit"] "Login"
+
+
+register :: Html ()
+register =
+  div_ [class_ "center"] $ do
+    form_ [class_ "registration"] $ do
+      div_ [class_ "row"] $ do
+        label_ [for_ "email"] "E-Mail"
+        input_ [id_ "email", type_ "text"]
+      div_ [class_ "row"] $ do
+        label_ [for_ "pass"] "Password"
+        input_ [id_ "pass", type_ "password"]
+      div_ [class_ "row"] $ do
+        button_ [type_ "submit"] "Register"
