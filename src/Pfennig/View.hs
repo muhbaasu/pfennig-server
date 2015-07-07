@@ -13,7 +13,7 @@ index bd = head_ $ do
 hd :: Html ()
 hd = do
   meta_ [charset_ "utf-8"]
-  meta_ [name_ "viewport",content_ "width=device-width, initial-scale=1"]
+  meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1"]
   title_ "Enrichment center"
   link_ [rel_ "stylesheet",
          type_ "text/css",
@@ -38,16 +38,15 @@ login =
         input_ [id_ "pass", type_ "password"]
 
       div_ [class_ "row"] $ do
-        div_ $ do
-          label_ [for_ "remember"] "Remember me"
-          input_ [id_ "remember", type_ "checkbox"]
-        div_ $ do
-          a_ [href_ "/register"] "Register"
+        label_ [for_ "remember"] "Remember me"
+        input_ [id_ "remember", type_ "checkbox"]
 
       div_ [class_ "row"] $ do
+        a_ [href_ "/register"] "Register"
         a_ [href_ "#"] "Forgot password?"
-        button_ [type_ "submit"] "Login"
 
+      div_ [class_ "row"] $ do
+        button_ [type_ "submit"] "Login"
 
 register :: Html ()
 register =
