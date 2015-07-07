@@ -3,6 +3,7 @@
 module Main where
 
 import           App
+import           Auth
 import           Control.Exception.Base        (bracket)
 import           Layout                        (readCSS)
 import           Migrations
@@ -67,14 +68,18 @@ setupAssets = do
 
 setupViewRoutes :: ScottyM ()
 setupViewRoutes = do
-  get "/" $ lucid $ index login
-  get "/register" $ lucid $ index register
+  get "/" $ lucid $ index View.login
+  get "/register" $ lucid $ index View.register
 
 setupAPIRoutes :: AppConfig -> ScottyM ()
 setupAPIRoutes cfg = do
+ -- expenditures
   get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
   post "/expenditure" $ Handlers.createExpenditure cfg
   -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
   delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
+  -- auth
+  post "/registration" $ Auth.register
+  post "/login" $ Auth.login

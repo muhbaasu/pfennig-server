@@ -28,14 +28,14 @@ hd = do
 login :: Html ()
 login =
   div_ [class_ "center"] $ do
-    form_ [class_ "login"] $ do
+    form_ [class_ "login", method_ "post", action_ "/login"] $ do
       h3_ "Login"
 
       div_ [class_ "row"] $ do
-        input_ [id_ "user", placeholder_ "Username", type_ "text"]
+        input_ [id_ "email", name_ "email", placeholder_ "E-Mail", type_ "text"]
 
       div_ [class_ "row"] $ do
-        input_ [id_ "pass", placeholder_ "Password", type_ "password"]
+        input_ [id_ "pass", name_ "pass", placeholder_ "Password", type_ "password"]
 
       div_ [class_ "row"] $ do
         label_ [for_ "remember"] "Remember me"
@@ -51,12 +51,12 @@ login =
 register :: Html ()
 register =
   div_ [class_ "center"] $ do
-    form_ [class_ "registration"] $ do
+    form_ [class_ "registration", method_ "post", action_ "/registration"] $ do
       div_ [class_ "row"] $ do
         label_ [for_ "email"] "E-Mail"
-        input_ [id_ "email", type_ "text"]
+        input_ [id_ "email", name_ "email", type_ "text"]
       div_ [class_ "row"] $ do
         label_ [for_ "pass"] "Password"
-        input_ [id_ "pass", type_ "password"]
+        input_ [id_ "pass", name_ "pass", type_ "password"]
       div_ [class_ "row"] $ do
         button_ [type_ "submit"] "Register"
