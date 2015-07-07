@@ -3,6 +3,8 @@
 module Layout where
 
 import           Clay                    hiding ((**))
+import           Clay.Stylesheet         (prefixed)
+import           Control.Monad           (forM_)
 import           Data.ByteString.Lazy    (ByteString)
 import           Data.Monoid
 import           Data.Text.Internal.Lazy
@@ -22,6 +24,8 @@ pfennig :: Css
 pfennig = do
   html ? do
     boxSizing borderBox
+    backgroundColor backgroundColor'
+    color foregroundColor'
 
   star ? do
     boxSizing inherit
@@ -29,10 +33,42 @@ pfennig = do
   base'
   forms
 
-  login
-
   body ? do
     fstFontFamily
+
+  forM_ [h1, h2, h3] $ \s ->
+    s ? do
+      color accentColor'
+
+blue' :: Color
+blue' = rgb 33 150 243
+
+purple' :: Color
+purple' = rgb 156 39 176
+
+backgroundColor' :: Color
+backgroundColor' = rgb 249 249 249
+
+foregroundColor' :: Color
+foregroundColor' = rgb 33 33 33
+
+lightGrey' :: Color
+lightGrey' = rgb 238 238 238
+
+accentColor' :: Color
+accentColor' = rgb 0 150 136
+
+shadowColor' :: Color
+shadowColor' = rgba 0 0 0 64
+
+button' :: Css
+button' = do
+  button ? do
+    backgroundColor blue'
+    border none nil transparent
+    color white
+    padding (vh 0.75) (vw 2) (vh 0.75) (vw 2)
+    textTransform uppercase
 
 base' :: Css
 base' = do
@@ -53,22 +89,40 @@ base' = do
     justifyContent center
     alignItems center
 
+  button'
+  input'
+  login'
+
+input' :: Css
+input' = do
+  forM_ [input # ("type" ^= "text"),
+         input # ("type" ^= "password")] $
+    \s -> do
+          s ? do
+            border none nil transparent
+            borderBottom solid (px 1) lightGrey'
+          s # (pseudo "focus") ? do
+            outline none nil transparent
+            borderBottom double (px 1) accentColor'
+
 forms :: Css
 forms = do
   form ? do
-    background red
-    paddingAll $ rem 0.25
+    background white
+    border solid (px 1) lightGrey'
+    paddingAll (vh 2)
 
   form |> ".row" ? do
     justifyContent spaceBetween
-    paddingAll $ rem 0.25
-  ".row" |> input ? do
-    marginLeft $ rem 1
+    margin nil nil (vh 1.5) nil
 
-login :: Css
-login = do
+login' :: Css
+login' = do
   ".login" ? do
-    background transparent
+    boxShadow' nil (vh 3) (vh 5) (vh (-1.5)) shadowColor'
+
+boxShadow' :: Size a -> Size a -> Size a -> Size a -> Color -> Css
+boxShadow' x y w z c = prefixed (browsers <> "box-shadow") (x ! y ! w ! z ! c)
 
 fstFontFamily = fontFamily ["Roboto"] [sansSerif]
 

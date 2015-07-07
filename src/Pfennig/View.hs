@@ -29,13 +29,13 @@ login :: Html ()
 login =
   div_ [class_ "center"] $ do
     form_ [class_ "login"] $ do
-      div_ [class_ "row"] $ do
-        label_ [for_ "user"] "Username"
-        input_ [id_ "user", type_ "text"]
+      h3_ "Login"
 
       div_ [class_ "row"] $ do
-        label_ [for_ "pass"] "Password"
-        input_ [id_ "pass", type_ "password"]
+        input_ [id_ "user", placeholder_ "Username", type_ "text"]
+
+      div_ [class_ "row"] $ do
+        input_ [id_ "pass", placeholder_ "Password", type_ "password"]
 
       div_ [class_ "row"] $ do
         label_ [for_ "remember"] "Remember me"
