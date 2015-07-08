@@ -26,8 +26,9 @@ hd = do
          href_ "assets/generated.css"]
 
 main' :: Html ()
-main' =
+main' = do
   h1_ "Welcome to the Aperture Enrichment Center!"
+  a_ [href_ "/logout"] "Logout"
 
 login :: Html ()
 login =

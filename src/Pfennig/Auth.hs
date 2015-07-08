@@ -24,5 +24,5 @@ login = do
 
 authorized :: ActionM ()
 authorized = do
-  setHeader "Set-Cookie" "authorized"
+  setHeader "Set-Cookie" "authorized=true; path=/;"
   redirect "/main"

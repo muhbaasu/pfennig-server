@@ -9,8 +9,8 @@ import           Layout                        (readCSS)
 import           Migrations
 import           View
 import           Web.Scotty                    (ActionM, ScottyM, delete, get,
-                                                middleware, post, raw, scotty,
-                                                setHeader)
+                                                header, middleware, post, raw,
+                                                redirect, scotty, setHeader)
 
 import qualified Handlers
 import qualified Hasql                         as H
@@ -68,7 +68,11 @@ setupAssets = do
 
 setupViewRoutes :: ScottyM ()
 setupViewRoutes = do
-  get "/" $ lucid $ index View.login
+  get "/" $ do
+    state <- header "Cookie"
+    case state of
+     Nothing -> lucid $ index View.login
+     Just _ -> redirect "/main"
   get "/register" $ lucid $ index View.register
 
 setupAPIRoutes :: AppConfig -> ScottyM ()
@@ -83,5 +87,8 @@ setupAPIRoutes cfg = do
   -- auth
   post "/registration" $ Auth.register
   post "/login" $ Auth.login
+  get "/logout" $ do
+    setHeader "Set-Cookie" "authorized=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    redirect "/"
 
   get "/main" $ Handlers.main' cfg
