@@ -36,21 +36,29 @@ login =
       h3_ "Login"
 
       div_ [class_ "row"] $ do
-        input_ [id_ "email", name_ "email", placeholder_ "E-Mail", type_ "text"]
+        input_ [id_ "email", name_ "email",
+                placeholder_ "E-Mail",
+                type_ "text"]
 
       div_ [class_ "row"] $ do
-        input_ [id_ "pass", name_ "pass", placeholder_ "Password", type_ "password"]
+        input_ [id_ "pass", name_ "pass",
+                placeholder_ "Password",
+                type_ "password"]
 
       div_ [class_ "row"] $ do
         label_ [for_ "remember"] "Remember me"
-        input_ [id_ "remember", type_ "checkbox"]
+        input_ [id_ "remember",
+                type_ "checkbox",
+                name_ "remember",
+                value_ "remember"]
 
       div_ [class_ "row"] $ do
         a_ [href_ "/register"] "Register"
         a_ [href_ "#"] "Forgot password?"
 
       div_ [class_ "row"] $ do
-        button_ [type_ "submit"] "Login"
+        button_ [type_ "submit",
+                 value_ "submit"] "Login"
 
 register :: Html ()
 register =
