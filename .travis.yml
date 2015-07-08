@@ -12,9 +12,8 @@ install:
   - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
   - travis_retry cabal update
   - cabal sandbox init
-  - git clone https://github.com/sebastiaanvisser/clay.git
-  - cabal sandbox add-source clay
-  - cabal install --enable-tests
+  - git clone https://github.com/sebastiaanvisser/clay.git --depth 1 --single-branch --branch master clay-master
+  - cabal sandbox add-source clay-master
   - cabal install -j --enable-tests
 
 script:
