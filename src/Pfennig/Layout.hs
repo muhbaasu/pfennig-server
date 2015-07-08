@@ -4,10 +4,8 @@ module Layout where
 
 import           Clay                    hiding ((**))
 import           Clay.Stylesheet         (prefixed)
-import           Control.Monad           (forM_)
 import           Data.ByteString.Lazy    (ByteString)
 import           Data.Monoid
-import           Data.Text.Internal.Lazy
 import           Data.Text.Lazy.Encoding (encodeUtf8)
 import qualified Data.Text.Lazy.IO       as LIO
 import           Prelude                 hiding (rem)
@@ -36,9 +34,8 @@ pfennig = do
   body ? do
     fstFontFamily
 
-  forM_ [h1, h2, h3] $ \s ->
-    s ? do
-      color accentColor'
+  (h1 <> h2 <> h3) ? do
+    color accentColor'
 
 blue' :: Color
 blue' = rgb 33 150 243
@@ -124,6 +121,7 @@ login' = do
 boxShadow' :: Size a -> Size a -> Size a -> Size a -> Color -> Css
 boxShadow' x y w z c = prefixed (browsers <> "box-shadow") (x ! y ! w ! z ! c)
 
+fstFontFamily :: Css
 fstFontFamily = fontFamily ["Roboto"] [sansSerif]
 
 paddingAll :: Size a -> Css

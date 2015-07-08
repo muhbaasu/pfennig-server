@@ -2,7 +2,6 @@
 module Handlers where
 
 import           App
-import           Layout                    (readCSS)
 import           Models
 import           Queries                   as Q
 
@@ -11,7 +10,6 @@ import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import           Data.ByteString.Lazy      (ByteString)
-import           Data.Text
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import           Lucid                     (renderBS)
@@ -42,8 +40,8 @@ getExpenditure (AppConfig s) = do
 
 createExpenditure :: RouteHandler
 createExpenditure (AppConfig s) = do
-    exp <- jsonData :: ActionM NewExpenditure
-    dbResult <- s $ H.tx Nothing (Q.insertExpenditure (UserId 1) exp)
+    expend <- jsonData :: ActionM NewExpenditure
+    dbResult <- s $ H.tx Nothing (Q.insertExpenditure (UserId 1) expend)
     case dbResult of
       (Left err) -> do
         json $ object [ "error" .= show err ]

@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 module Auth where
 
-import           App
 import           Data.Text
 import           Network.HTTP.Types.Status
 import           Web.Scotty                (ActionM, param, redirect, setHeader,
