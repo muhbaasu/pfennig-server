@@ -25,6 +25,10 @@ hd = do
          type_ "text/css",
          href_ "assets/generated.css"]
 
+main' :: Html ()
+main' =
+  h1_ "Welcome to the Aperture Enrichment Center!"
+
 login :: Html ()
 login =
   div_ [class_ "center"] $ do

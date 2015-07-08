@@ -4,7 +4,8 @@ module Auth where
 import           App
 import           Data.Text
 import           Network.HTTP.Types.Status
-import           Web.Scotty                (ActionM, param, status)
+import           Web.Scotty                (ActionM, param, redirect, setHeader,
+                                            status)
 
 register :: ActionM ()
 register = do
@@ -18,6 +19,11 @@ login = do
   email <- param "email"::ActionM Text
   pw    <- param "pass"::ActionM Text
   if pw == "passw0rd"
-    then status ok200
+    then authorized
     else status unauthorized401
   return ()
+
+authorized :: ActionM ()
+authorized = do
+  setHeader "Set-Cookie" "authorized"
+  redirect "/main"

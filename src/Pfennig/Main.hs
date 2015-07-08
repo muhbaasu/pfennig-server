@@ -83,3 +83,5 @@ setupAPIRoutes cfg = do
   -- auth
   post "/registration" $ Auth.register
   post "/login" $ Auth.login
+
+  get "/main" $ Handlers.main' cfg

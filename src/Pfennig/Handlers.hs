@@ -14,9 +14,12 @@ import           Data.ByteString.Lazy      (ByteString)
 import           Data.Text
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
+import           Lucid                     (renderBS)
 import           Network.HTTP.Types.Status
-import           Web.Scotty                (ActionM, json, jsonData, param, raw,
-                                            setHeader, status)
+import           View                      (index, main')
+import           Web.Scotty                (ActionM, header, json, jsonData,
+                                            param, raw, redirect, setHeader,
+                                            status)
 
 getCss :: ByteString -> ActionM ()
 getCss css = do
@@ -86,3 +89,13 @@ deleteExpenditure (AppConfig s) = do
       json $ object [ "error" .= show err ]
       status badRequest400
     _ -> status internalServerError500 -- something weird happened
+
+main' :: RouteHandler
+main' (AppConfig _) = do
+  state <- header "Cookie"
+  case state of
+   Nothing -> redirect "/"
+   Just _ -> lucid $ index View.main'
+  where lucid h = do
+          setHeader "Content-Type" "text/html"
+          raw . renderBS $ h
