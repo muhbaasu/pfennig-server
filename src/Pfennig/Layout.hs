@@ -95,15 +95,14 @@ base' = do
 
 input' :: Css
 input' = do
-  forM_ [input # ("type" ^= "text"),
-         input # ("type" ^= "password")] $
-    \s -> do
-          s ? do
-            border none nil transparent
-            borderBottom solid (px 1) lightGrey'
-          s # (pseudo "focus") ? do
-            outline none nil transparent
-            borderBottom double (px 1) accentColor'
+  (input # ("type" ^= "password")) <> (input # ("type" ^= "text")) <? do
+    focus & do
+      outline none nil transparent
+      borderBottom double (px 1) accentColor'
+
+    border none nil transparent
+    borderBottom solid (px 1) lightGrey'
+    width $ pct 100
 
 forms :: Css
 forms = do
@@ -120,6 +119,7 @@ login' :: Css
 login' = do
   ".login" ? do
     boxShadow' nil (vh 3) (vh 5) (vh (-1.5)) shadowColor'
+    width (pct 30)
 
 boxShadow' :: Size a -> Size a -> Size a -> Size a -> Color -> Css
 boxShadow' x y w z c = prefixed (browsers <> "box-shadow") (x ! y ! w ! z ! c)
