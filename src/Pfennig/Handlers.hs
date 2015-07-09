@@ -1,20 +1,24 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Handlers where
 
 import           App
-import           Models
-import           Queries                   as Q
-
 import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
-import           Data.ByteString.Lazy      (ByteString)
+import           Data.ByteString.Lazy      (ByteString, toStrict)
+import           Data.Text                 (Text ())
+import qualified Data.Text.Lazy            as TL
+import           Data.Text.Lazy.Encoding   (encodeUtf8)
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import           Lucid                     (renderBS)
+import           Models
 import           Network.HTTP.Types.Status
+import           Queries                   as Q
 import           View                      (index, main')
+import           Web.Cookie                (parseCookiesText)
 import           Web.Scotty                (ActionM, header, json, jsonData,
                                             param, raw, redirect, setHeader,
                                             status)
@@ -90,10 +94,20 @@ deleteExpenditure (AppConfig s) = do
 
 main' :: RouteHandler
 main' (AppConfig _) = do
-  state <- header "Cookie"
-  case state of
-   Nothing -> redirect "/"
-   Just _ -> lucid $ index View.main'
+  loggedIn <- (fmap . fmap) isAuthorized $ header "Cookie"
+  if maybe False id loggedIn
+    then lucid $ index View.main'
+    else redirect "/"
   where lucid h = do
           setHeader "Content-Type" "text/html"
           raw . renderBS $ h
+
+isAuthorized :: TL.Text -> Bool
+isAuthorized c =
+  let bs = toStrict $ encodeUtf8 c
+      cs = parseCookiesText bs
+      token = lookup ("authorized" :: Text) cs
+  in case token of
+      Nothing -> False
+      Just val ->
+        if val == "true" then True else False

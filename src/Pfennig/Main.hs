@@ -5,21 +5,20 @@ module Main where
 import           App
 import           Auth
 import           Control.Exception.Base        (bracket)
-import           Layout                        (readCSS)
-import           Migrations
-import           View
-import           Web.Scotty                    (ActionM, ScottyM, delete, get,
-                                                header, middleware, post, raw,
-                                                redirect, scotty, setHeader)
-
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
+import           Layout                        (readCSS)
 import           Lucid
+import           Migrations
 import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
                                                 hasPrefix, initCaching,
                                                 staticPolicy')
 import qualified Schema                        as S
+import           View
+import           Web.Scotty                    (ActionM, ScottyM, delete, get,
+                                                header, middleware, post, raw,
+                                                redirect, scotty, setHeader)
 
 main :: IO ()
 main = do
@@ -69,10 +68,10 @@ setupAssets = do
 setupViewRoutes :: ScottyM ()
 setupViewRoutes = do
   get "/" $ do
-    state <- header "Cookie"
-    case state of
-     Nothing -> lucid $ index View.login
-     Just _ -> redirect "/main"
+    loggedIn <- (fmap . fmap) Handlers.isAuthorized $ header "Cookie"
+    if maybe False id loggedIn
+      then redirect "/main"
+      else lucid $ index View.login
   get "/register" $ lucid $ index View.register
 
 setupAPIRoutes :: AppConfig -> ScottyM ()
