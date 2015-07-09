@@ -68,7 +68,7 @@ setupAssets = do
 setupViewRoutes :: ScottyM ()
 setupViewRoutes = do
   get "/" $ do
-    loggedIn <- (fmap . fmap) Handlers.isAuthorized $ header "Cookie"
+    loggedIn <- (fmap . fmap) Auth.isAuthorized $ header "Cookie"
     if maybe False id loggedIn
       then redirect "/main"
       else lucid $ index View.login
@@ -87,7 +87,7 @@ setupAPIRoutes cfg = do
   post "/registration" $ Auth.register
   post "/login" $ Auth.login
   get "/logout" $ do
-    setHeader "Set-Cookie" "authorized=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    Auth.unauthorize
     redirect "/"
 
   get "/main" $ Handlers.main' cfg

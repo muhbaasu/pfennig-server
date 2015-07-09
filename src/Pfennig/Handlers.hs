@@ -3,6 +3,7 @@
 module Handlers where
 
 import           App
+import           Auth
 import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
 import           Data.Aeson                (object, (.=))
@@ -101,13 +102,3 @@ main' (AppConfig _) = do
   where lucid h = do
           setHeader "Content-Type" "text/html"
           raw . renderBS $ h
-
-isAuthorized :: TL.Text -> Bool
-isAuthorized c =
-  let bs = toStrict $ encodeUtf8 c
-      cs = parseCookiesText bs
-      token = lookup ("authorized" :: Text) cs
-  in case token of
-      Nothing -> False
-      Just val ->
-        if val == "true" then True else False
