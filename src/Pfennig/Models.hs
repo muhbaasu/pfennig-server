@@ -21,9 +21,9 @@ data Reference = -- | Might still require joins
                  | NoRef
 
 type family RefType (a :: *) (r :: Reference) :: * where
-  RefType (Expenditure r) Database = ExpenditureId
-  RefType User Database = UserId
-  RefType a NoRef = a
+  RefType (Expenditure r) 'Database = ExpenditureId
+  RefType User 'Database = UserId
+  RefType a 'NoRef = a
 
 newtype ExpenditureId = ExpenditureId Int deriving (Eq, Show)
 newtype ExpenditureTagId = ExpenditureTagId Int deriving (Eq, Show)
