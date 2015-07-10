@@ -6,6 +6,9 @@ import           Data.Monoid
 import           Data.Text
 import qualified Data.Text.Lazy            as TL
 import qualified Data.Text.Lazy.Encoding   as TL
+import           Data.Time.Calendar        (fromGregorian)
+import           Data.Time.Clock           (UTCTime (..), addUTCTime,
+                                            getCurrentTime, secondsToDiffTime)
 import           Network.HTTP.Types.Status
 import           Web.Cookie                (parseCookiesText)
 import           Web.JWT
@@ -43,6 +46,15 @@ authorize username = do
   setHeader "Set-Cookie" $ "session=" <>
     (TL.fromStrict jwt) <> "; path=/; HttpOnly"
   redirect "/main"
+
+isCurrentlyValid :: JWT VerifiedJWT -> UTCTime -> Bool
+isCurrentlyValid tkn now =
+  let cl = claims tkn
+      toUTC diff = addUTCTime (secondsSinceEpoch diff) $ UTCTime (fromGregorian 1970 1 1) (secondsToDiffTime 0)
+      notBefore = (now <) . toUTC <$> nbf cl
+      notExpired = (now >) . toUTC <$> Web.JWT.exp cl
+      valid = (&&) <$> notBefore <*> notExpired
+  in Just True == valid
 
 isAuthorized :: TL.Text -> Bool
 isAuthorized cookie =
