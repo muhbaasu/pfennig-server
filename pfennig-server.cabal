@@ -50,8 +50,15 @@ Test-Suite spec
   hs-source-dirs:       tests, src/Pfennig
   ghc-options:          -W -Wall
   main-Is:              Spec.hs
+  default-extensions:   GeneralizedNewtypeDeriving
+                      , OverloadedStrings
   build-depends:        base
                       , bytestring
+                      , cookie
                       , hspec
+                      , http-types
                       , http-media
+                      , jwt
                       , text
+                      , time
+                      , scotty

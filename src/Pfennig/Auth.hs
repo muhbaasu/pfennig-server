@@ -51,8 +51,8 @@ isCurrentlyValid :: JWT VerifiedJWT -> UTCTime -> Bool
 isCurrentlyValid tkn now =
   let cl = claims tkn
       toUTC diff = addUTCTime (secondsSinceEpoch diff) $ UTCTime (fromGregorian 1970 1 1) (secondsToDiffTime 0)
-      notBefore = (now <) . toUTC <$> nbf cl
-      notExpired = (now >) . toUTC <$> Web.JWT.exp cl
+      notBefore  = (now <=) . toUTC <$> nbf cl
+      notExpired = (now >=) . toUTC <$> Web.JWT.exp cl
       valid = (&&) <$> notBefore <*> notExpired
   in Just True == valid
 
