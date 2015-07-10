@@ -5,6 +5,9 @@ module Main where
 import           App
 import           Auth
 import           Control.Exception.Base        (bracket)
+import           Control.Monad.IO.Class        (liftIO)
+import           Data.Maybe                    (fromMaybe)
+import           Data.Time.Clock               (getCurrentTime)
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
@@ -68,8 +71,9 @@ setupAssets = do
 setupViewRoutes :: ScottyM ()
 setupViewRoutes = do
   get "/" $ do
-    loggedIn <- (fmap . fmap) Auth.isAuthorized $ header "Cookie"
-    if maybe False id loggedIn
+    now <- liftIO getCurrentTime
+    cookie <- header "Cookie"
+    if fromMaybe False $ (isAuthorized now) <$> cookie
       then redirect "/main"
       else lucid $ index View.login
   get "/register" $ lucid $ index View.register

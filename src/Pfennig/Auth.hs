@@ -56,8 +56,8 @@ isCurrentlyValid tkn now =
       valid = (&&) <$> notBefore <*> notExpired
   in Just True == valid
 
-isAuthorized :: TL.Text -> Bool
-isAuthorized cookie =
+isAuthorized :: UTCTime -> TL.Text -> Bool
+isAuthorized now cookie =
   let bs = BS.toStrict $ TL.encodeUtf8 cookie
       cs = parseCookiesText bs
       token = lookup "session" cs
@@ -65,4 +65,4 @@ isAuthorized cookie =
       Nothing -> False
       Just val ->
         let mJwt = decodeAndVerifySignature key val
-        in maybe False (\jwt -> True) mJwt
+        in maybe False (\jwt -> isCurrentlyValid jwt now) mJwt

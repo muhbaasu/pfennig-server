@@ -6,12 +6,15 @@ import           App
 import           Auth
 import           Control.Error.Safe        (justErr)
 import           Control.Monad             (join)
+import           Control.Monad.IO.Class    (liftIO)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
 import           Data.ByteString.Lazy      (ByteString, toStrict)
+import           Data.Maybe                (fromMaybe)
 import           Data.Text                 (Text ())
 import qualified Data.Text.Lazy            as TL
 import           Data.Text.Lazy.Encoding   (encodeUtf8)
+import           Data.Time.Clock           (getCurrentTime)
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
 import           Lucid                     (renderBS)
@@ -19,7 +22,6 @@ import           Models
 import           Network.HTTP.Types.Status
 import           Queries                   as Q
 import           View                      (index, main')
-import           Web.Cookie                (parseCookiesText)
 import           Web.Scotty                (ActionM, header, json, jsonData,
                                             param, raw, redirect, setHeader,
                                             status)
@@ -95,8 +97,9 @@ deleteExpenditure (AppConfig s) = do
 
 main' :: RouteHandler
 main' (AppConfig _) = do
-  loggedIn <- (fmap . fmap) isAuthorized $ header "Cookie"
-  if maybe False id loggedIn
+  now <- liftIO getCurrentTime
+  cookie <- header "Cookie"
+  if fromMaybe False $ (isAuthorized now) <$> cookie
     then lucid $ index View.main'
     else redirect "/"
   where lucid h = do
