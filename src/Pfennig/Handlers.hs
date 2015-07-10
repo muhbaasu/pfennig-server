@@ -99,7 +99,7 @@ main' :: RouteHandler
 main' (AppConfig _) = do
   now <- liftIO getCurrentTime
   cookie <- header "Cookie"
-  if fromMaybe False $ (isAuthorized now) <$> cookie
+  if fromMaybe False $ isAuthorized now <$> cookie
     then lucid $ index View.main'
     else redirect "/"
   where lucid h = do

@@ -35,7 +35,7 @@ key :: Secret
 key = secret "all your base are belong to us"
 
 unauthorize :: ActionM ()
-unauthorize = do
+unauthorize =
   setHeader "Set-Cookie"
     "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
@@ -65,4 +65,4 @@ isAuthorized now cookie =
       Nothing -> False
       Just val ->
         let mJwt = decodeAndVerifySignature key val
-        in maybe False (\jwt -> isCurrentlyValid jwt now) mJwt
+        in maybe False (`isCurrentlyValid` now) mJwt

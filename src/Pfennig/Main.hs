@@ -61,7 +61,7 @@ lucid h = do
   raw . renderBS  $ h
 
 setupMiddleware :: CacheContainer -> ScottyM ()
-setupMiddleware cache = do
+setupMiddleware cache =
   middleware $ staticPolicy' cache $ hasPrefix "assets/"
 
 setupAssets :: ScottyM ()
@@ -73,7 +73,7 @@ setupViewRoutes = do
   get "/" $ do
     now <- liftIO getCurrentTime
     cookie <- header "Cookie"
-    if fromMaybe False $ (isAuthorized now) <$> cookie
+    if fromMaybe False $ isAuthorized now <$> cookie
       then redirect "/main"
       else lucid $ index View.login
   get "/register" $ lucid $ index View.register
@@ -88,8 +88,8 @@ setupAPIRoutes cfg = do
   -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
   delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
   -- auth
-  post "/registration" $ Auth.register
-  post "/login" $ Auth.login
+  post "/registration" Auth.register
+  post "/login" Auth.login
   get "/logout" $ do
     Auth.unauthorize
     redirect "/"
