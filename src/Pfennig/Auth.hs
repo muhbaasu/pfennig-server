@@ -26,8 +26,6 @@ sessionDuration = fromInteger $ 60 * 60 * 60
 
 register :: ActionM ()
 register = do
-  email <- param "email"::ActionM Text
-  pw    <- param "pass"::ActionM Text
   status created201
   return ()
 

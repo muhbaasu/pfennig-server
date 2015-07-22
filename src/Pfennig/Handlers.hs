@@ -9,11 +9,8 @@ import           Control.Monad             (join)
 import           Control.Monad.IO.Class    (liftIO)
 import           Data.Aeson                (object, (.=))
 import           Data.Bifunctor            (bimap)
-import           Data.ByteString.Lazy      (ByteString, toStrict)
+import           Data.ByteString.Lazy      (ByteString)
 import           Data.Maybe                (fromMaybe)
-import           Data.Text                 (Text ())
-import qualified Data.Text.Lazy            as TL
-import           Data.Text.Lazy.Encoding   (encodeUtf8)
 import           Data.Time.Clock           (getCurrentTime)
 import           Data.Time.LocalTime       (LocalTime)
 import qualified Hasql                     as H
