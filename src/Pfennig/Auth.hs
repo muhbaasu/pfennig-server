@@ -51,15 +51,15 @@ unauthorize =
 authorize :: Text -> ActionM ()
 authorize username = do
   now <- liftIO getCurrentTime
-  let jwtNbf = intDate $ fromInteger 0
-  let jwtExp = intDate $ (diffUTCTime now epoch) + sessionDuration
+  let jwtNbf = intDate 0
+  let jwtExp = intDate $ diffUTCTime now epoch + sessionDuration
   let cs = def {
           sub = stringOrURI username
         , nbf = jwtNbf
         , Web.JWT.exp = jwtExp }
   let jwt = encodeSigned HS256 key cs
   setHeader "Set-Cookie" $ "session=" <>
-    (TL.fromStrict jwt) <> "; path=/; HttpOnly"
+    TL.fromStrict jwt <> "; path=/; HttpOnly"
   redirect "/main"
 
 isCurrentlyValid :: JWT VerifiedJWT -> UTCTime -> Bool
