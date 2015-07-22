@@ -25,16 +25,16 @@ pfennig = do
     backgroundColor backgroundColor'
     color foregroundColor'
 
-  star ? do
+  star ?
     boxSizing inherit
 
   base'
   forms
 
-  body ? do
+  body ?
     fstFontFamily
 
-  (h1 <> h2 <> h3) ? do
+  (h1 <> h2 <> h3) ?
     color accentColor'
 
 blue' :: Color
@@ -59,7 +59,7 @@ shadowColor' :: Color
 shadowColor' = rgba 0 0 0 64
 
 button' :: Css
-button' = do
+button' =
   button ? do
     backgroundColor blue'
     border none nil transparent
@@ -91,7 +91,7 @@ base' = do
   login'
 
 input' :: Css
-input' = do
+input' =
   (input # ("type" ^= "password")) <> (input # ("type" ^= "text")) <? do
     focus & do
       outline none nil transparent
@@ -113,7 +113,7 @@ forms = do
     margin nil nil (vh 1.5) nil
 
 login' :: Css
-login' = do
+login' =
   ".login" ? do
     boxShadow' nil (vh 3) (vh 5) (vh (-1.5)) shadowColor'
     width (pct 30)

@@ -65,7 +65,7 @@ setupMiddleware cache =
   middleware $ staticPolicy' cache $ hasPrefix "assets/"
 
 setupAssets :: ScottyM ()
-setupAssets = do
+setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
 
 setupViewRoutes :: ScottyM ()
