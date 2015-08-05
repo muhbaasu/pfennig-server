@@ -62,3 +62,4 @@ Test-Suite spec
                       , text
                       , time
                       , scotty
+                      , transformers
