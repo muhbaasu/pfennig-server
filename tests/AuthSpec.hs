@@ -25,7 +25,7 @@ spec = do
                    , nbf = notBefore }
           jwt = encodeSigned HS256 key cs
           mJwt = decodeAndVerifySignature key jwt
-          now  = UTCTime (fromGregorian 2005 1 1) (secondsToDiffTime 0)
+          now  = UTCTime (fromGregorian 1990 1 1) (secondsToDiffTime 0)
           valid = isCurrentlyValid (fromJust mJwt) now
       valid `shouldBe` False
 
@@ -60,4 +60,4 @@ spec = do
           mJwt = decodeAndVerifySignature key jwt
           now  = UTCTime (fromGregorian 2005 1 1) (secondsToDiffTime 0)
           valid = isCurrentlyValid (fromJust mJwt) now
-      valid `shouldBe` False
+      valid `shouldBe` True
