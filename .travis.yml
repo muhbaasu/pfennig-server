@@ -1,29 +1,17 @@
-# Use the container infrastructure; sudo is no longer required
-sudo: false
-
-# Automated package installations
-addons:
-  apt:
-    # Approved source list: https://github.com/travis-ci/apt-source-whitelist/blob/master/ubuntu.json
-    sources:
-      - hvr-ghc
-
-    # Approved package list: https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
-    packages:
-      - cabal-install-1.22
-      - ghc-7.10.1
+env:
 
 before_install:
-  - export PATH=/opt/ghc/7.10.1/bin:/opt/cabal/1.22/bin:$HOME/.cabal/bin:$PATH
+  - travis_retry wget -q -O- https://s3.amazonaws.com/download.fpcomplete.com/ubuntu/fpco.key | sudo apt-key add -
+  - travis_retry echo 'deb http://download.fpcomplete.com/ubuntu/precise stable main'|sudo tee /etc/apt/sources.list.d/fpco.list
+  - travis_retry sudo apt-get update
+  - travis_retry sudo apt-get install stack -y
 
 install:
-  - cabal --version
+  - stack --version
   - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
-  - travis_retry cabal update
-  - cabal sandbox init
   - git clone https://github.com/sebastiaanvisser/clay.git --depth 1 --single-branch --branch master clay-master
-  - cabal sandbox add-source clay-master
-  - cabal install -j --enable-tests
+  - stack setup
+  - stack install --test
 
 script:
-  - cabal build && cabal test --show-details=always
+  - stack build && stack test

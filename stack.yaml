@@ -1,0 +1,6 @@
+flags: {}
+packages:
+  - '.'
+  - clay-master
+extra-deps: []
+resolver: lts-3.2
