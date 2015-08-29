@@ -75,8 +75,10 @@ setupViewRoutes = do
     cookie <- header "Cookie"
     if fromMaybe False $ isAuthorized now <$> cookie
       then redirect "/main"
-      else lucid $ index View.login
-  get "/register" $ lucid $ index View.register
+      else lucid $ index $ View.login $ genCSRF now
+  get "/register" $ do
+    now <- liftIO getCurrentTime
+    lucid $ index $ View.register $ genCSRF now
 
 setupAPIRoutes :: AppConfig -> ScottyM ()
 setupAPIRoutes cfg = do

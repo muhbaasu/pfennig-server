@@ -46,6 +46,15 @@ unauthorize =
   setHeader "Set-Cookie"
     "session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
+genCSRF :: UTCTime ->JSON
+genCSRF now =
+  let jwtNbf = intDate 0
+      jwtExp = intDate $ diffUTCTime now epoch + sessionDuration
+      cs = def {
+              nbf = jwtNbf
+            , Web.JWT.exp = jwtExp }
+  in encodeSigned HS256 key cs
+
 authorize :: Text -> ActionM ()
 authorize username = do
   now <- liftIO getCurrentTime

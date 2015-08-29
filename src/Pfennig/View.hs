@@ -4,6 +4,7 @@
 module View where
 
 import           Lucid
+import Web.JWT   (JSON)
 
 index :: Html () -> Html ()
 index bd = head_ $ do
@@ -30,10 +31,17 @@ main' = do
   h1_ "Welcome to the Aperture Enrichment Center!"
   a_ [href_ "/logout"] "Logout"
 
-login :: Html ()
-login =
+csrfToken :: JSON -> Html ()
+csrfToken jwt = do
+  input_ [type_ "hidden",
+          name_ "csrf_token",
+          value_ jwt]
+
+login :: JSON -> Html ()
+login jwt =
   div_ [class_ "center"] $
     form_ [class_ "login", method_ "post", action_ "/login"] $ do
+      csrfToken jwt
       h3_ "Login"
 
       div_ [class_ "row"] $
@@ -61,10 +69,11 @@ login =
         button_ [type_ "submit",
                  value_ "submit"] "Login"
 
-register :: Html ()
-register =
+register :: JSON -> Html ()
+register jwt =
   div_ [class_ "center"] $
     form_ [class_ "registration", method_ "post", action_ "/registration"] $ do
+      csrfToken jwt
       div_ [class_ "row"] $ do
         label_ [for_ "email"] "E-Mail"
         input_ [id_ "email", name_ "email", type_ "text"]
