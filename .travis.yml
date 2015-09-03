@@ -9,7 +9,7 @@ before_install:
 install:
   - stack --version
   - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
-  - git clone https://github.com/sebastiaanvisser/clay.git --depth 1 --single-branch --branch master clay-master
+  - git clone https://github.com/muhbaasu/clay.git --depth 1 --single-branch --branch master clay-master
   - stack setup
   - stack install --test
 
