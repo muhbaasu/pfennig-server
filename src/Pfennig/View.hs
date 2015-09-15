@@ -73,3 +73,6 @@ register =
         input_ [id_ "pass", name_ "pass", type_ "password"]
       div_ [class_ "row"] $
         button_ [type_ "submit"] "Register"
+
+notFound :: Html ()
+notFound = div_ [] "No matching route found"

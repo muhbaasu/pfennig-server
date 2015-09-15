@@ -18,10 +18,11 @@ import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy 
                                                 hasPrefix, initCaching,
                                                 staticPolicy')
 import qualified Schema                        as S
-import           View
+import qualified View
 import           Web.Scotty                    (ActionM, ScottyM, delete, get,
-                                                header, middleware, post, raw,
-                                                redirect, scotty, setHeader)
+                                                header, middleware, notFound,
+                                                post, raw, redirect, scotty,
+                                                setHeader)
 
 main :: IO ()
 main = do
@@ -75,8 +76,8 @@ setupViewRoutes = do
     cookie <- header "Cookie"
     if fromMaybe False $ isAuthorized now <$> cookie
       then redirect "/main"
-      else lucid $ index View.login
-  get "/register" $ lucid $ index View.register
+      else lucid $ View.index View.login
+  get "/register" $ lucid $ View.index View.register
 
 setupAPIRoutes :: AppConfig -> ScottyM ()
 setupAPIRoutes cfg = do
@@ -95,3 +96,4 @@ setupAPIRoutes cfg = do
     redirect "/"
 
   get "/main" $ Handlers.main' cfg
+  notFound $ lucid $ View.index View.notFound
