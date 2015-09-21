@@ -7,11 +7,12 @@ module Models where
 import           Control.Monad       (mzero)
 import           Data.Aeson
 import           Data.Scientific     (Scientific)
-import           Data.Text           (Text)
-import           Data.Text.Lazy      (unpack)
+import qualified Data.Text           as T
+import qualified Data.Text.Lazy      as TL
 import           Data.Time.Format    (defaultTimeLocale, formatTime,
                                       iso8601DateFormat, parseTimeM)
 import           Data.Time.LocalTime (LocalTime)
+import           Servant             (FromText, fromText)
 import           Web.Scotty          (Parsable (..))
 
 data Reference = -- | Might still require joins
@@ -36,14 +37,14 @@ data Expenditure (r :: Reference)=
       _expId        :: ExpenditureId
     , _expCreatedAt :: LocalTime
     , _expUpdatedAt :: LocalTime
-    , _expName      :: Text
+    , _expName      :: T.Text
     , _expAmount    :: Scientific
     , _expUser      :: RefType User r
     }
 
 data NewExpenditure=
   NewExpenditure {
-      _nExpName   :: Text
+      _nExpName   :: T.Text
     , _nExpAmount :: Scientific
     }
 
@@ -51,7 +52,7 @@ data NewExpenditure=
 data ExpenditureTag (r :: Reference) =
   ExpenditureTag {
        _tagId        :: ExpenditureTagId
-     , _tagTitle     :: Text
+     , _tagTitle     :: T.Text
      , _tagCreatedAt :: LocalTime
      } deriving (Show)
 
@@ -60,12 +61,15 @@ data User =
     _usrId        :: UserId
   , _usrCreatedAt :: LocalTime
   , _usrUpdatedAt :: LocalTime
-  , _usrLogin     :: Text
-  , _usrEmail     :: Text
+  , _usrLogin     :: T.Text
+  , _usrEmail     :: T.Text
   } deriving (Show)
 
 instance ToJSON ExpenditureId where
   toJSON (ExpenditureId eid) = toJSON eid
+
+instance FromText ExpenditureId where
+  fromText txt = ExpenditureId <$> fromText txt
 
 instance ToJSON UserId where
   toJSON (UserId uid) = toJSON uid
@@ -94,5 +98,9 @@ instance ToJSON LocalTime where
   toJSON = toJSON . formatTime defaultTimeLocale "%Y%m%dT%H%M%S"
 
 instance Parsable LocalTime where
-  parseParam p = parseTimeM False defaultTimeLocale timeFormat $ unpack p
+  parseParam p = parseTimeM False defaultTimeLocale timeFormat $ TL.unpack p
+    where timeFormat = iso8601DateFormat Nothing
+
+instance FromText LocalTime where
+  fromText txt = parseTimeM False defaultTimeLocale timeFormat $ T.unpack txt
     where timeFormat = iso8601DateFormat Nothing

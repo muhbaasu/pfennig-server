@@ -1,28 +1,28 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Main where
 
 import           App
-import           Auth
+import qualified Auth
 import           Control.Exception.Base        (bracket)
-import           Control.Monad.IO.Class        (liftIO)
-import           Data.Maybe                    (fromMaybe)
-import           Data.Time.Clock               (getCurrentTime)
+
+import           Control.Monad.Reader          (runReaderT)
+import           Control.Monad.Trans.Either    (EitherT)
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
 import           Layout                        (readCSS)
 import           Lucid
 import           Migrations
-import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
-                                                hasPrefix, initCaching,
+import           Network.Wai                   (Application)
+import           Network.Wai.Handler.Warp      (run)
+import           Network.Wai.Middleware.Static (CacheContainer, hasPrefix,
                                                 staticPolicy')
 import qualified Schema                        as S
-import qualified View
-import           Web.Scotty                    (ActionM, ScottyM, delete, get,
-                                                header, middleware, notFound,
-                                                post, raw, redirect, scotty,
-                                                setHeader)
+import           Servant
+import           Web.Scotty                    (ActionM, ScottyM, get,
+                                                middleware, raw, setHeader)
 
 main :: IO ()
 main = do
@@ -33,7 +33,6 @@ main = do
                          "pfennig"
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
-  cache <- initCaching PublicStaticCaching
 
   bracket
     (H.acquirePool postgresSettings sessionSettings)
@@ -42,11 +41,25 @@ main = do
         let session = H.session pool
         let cfg = AppConfig session
         runMigrations migrations pool
-        scotty 3000 $ do
-          setupMiddleware cache
-          setupAssets
-          setupViewRoutes
-          setupAPIRoutes cfg)
+        run 3000 $ app cfg)
+
+app :: AppConfig -> Application
+app cfg = serve publicAPI (readerServer cfg)
+
+server :: ServerT PublicAPI RouteM
+server = Auth.server :<|> Handlers.server
+
+type PublicAPI =  Auth.AuthAPI
+                  :<|> Handlers.ExpenditureAPI
+
+publicAPI :: Proxy PublicAPI
+publicAPI = Proxy
+
+readerToEither :: AppConfig -> RouteM :~> EitherT ServantErr IO
+readerToEither cfg = Nat $ \x -> runReaderT x cfg
+
+readerServer :: AppConfig -> Server PublicAPI
+readerServer cfg = enter (readerToEither cfg) server
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createUsers
@@ -68,32 +81,3 @@ setupMiddleware cache =
 setupAssets :: ScottyM ()
 setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
-
-setupViewRoutes :: ScottyM ()
-setupViewRoutes = do
-  get "/" $ do
-    now <- liftIO getCurrentTime
-    cookie <- header "Cookie"
-    if fromMaybe False $ isAuthorized now <$> cookie
-      then redirect "/main"
-      else lucid $ View.index View.login
-  get "/register" $ lucid $ View.index View.register
-
-setupAPIRoutes :: AppConfig -> ScottyM ()
-setupAPIRoutes cfg = do
- -- expenditures
-  get "/expenditure" $ Handlers.getExpenditures cfg
-  get "/expenditure/:id" $ Handlers.getExpenditure cfg
-  get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
-  post "/expenditure" $ Handlers.createExpenditure cfg
-  -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
-  delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
-  -- auth
-  post "/registration" Auth.register
-  post "/login" Auth.login
-  get "/logout" $ do
-    Auth.unauthorize
-    redirect "/"
-
-  get "/main" $ Handlers.main' cfg
-  notFound $ lucid $ View.index View.notFound
