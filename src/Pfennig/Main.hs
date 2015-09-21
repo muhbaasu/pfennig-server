@@ -4,6 +4,7 @@ module Main where
 
 import           App
 import           Auth
+import           AuthServant                   as AS
 import           Control.Exception.Base        (bracket)
 import           Control.Monad.IO.Class        (liftIO)
 import           Data.Maybe                    (fromMaybe)
@@ -14,10 +15,13 @@ import qualified Hasql.Postgres                as HP
 import           Layout                        (readCSS)
 import           Lucid
 import           Migrations
+import           Network.Wai                   (Application)
+import           Network.Wai.Handler.Warp      (run)
 import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
                                                 hasPrefix, initCaching,
                                                 staticPolicy')
 import qualified Schema                        as S
+import           Servant
 import qualified View
 import           Web.Scotty                    (ActionM, ScottyM, delete, get,
                                                 header, middleware, notFound,
@@ -42,11 +46,10 @@ main = do
         let session = H.session pool
         let cfg = AppConfig session
         runMigrations migrations pool
-        scotty 3000 $ do
-          setupMiddleware cache
-          setupAssets
-          setupViewRoutes
-          setupAPIRoutes cfg)
+        run 3000 app)
+
+app :: Application
+app = serve AS.publicAPI server
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createUsers

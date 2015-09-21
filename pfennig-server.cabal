@@ -19,6 +19,7 @@ executable pfennig-server
                      , bytestring >=0.10
                      , clay
                      , cookie ==0.4.*
+                     , either >=4.4
                      , errors >=2.0
                      , hasql >=0.7
                      , hasql-backend >=0.4
@@ -32,12 +33,16 @@ executable pfennig-server
                      , mtl >= 2.2
                      , safe >=0.3
                      , scientific >=0.3.3
+                     , servant >=0.4
+                     , servant-server >= 0.4
                      , scotty >=0.9
                      , SHA >=1.6
                      , text >=1.2
                      , time >=1.5
                      , transformers >=0.4
                      , wai-middleware-static >= 0.7
+                     , wai >= 3.0
+                     , warp >= 3.1
 --  exposed-modules:     NetworkHelper
   hs-source-dirs:      src/Pfennig/
   default-language:    Haskell2010
