@@ -1,10 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module Main where
 
 import           App
-import           Auth
-import           AuthServant                   as AS
+import qualified Auth
 import           Control.Exception.Base        (bracket)
 import           Control.Monad.IO.Class        (liftIO)
 import           Data.Maybe                    (fromMaybe)
@@ -49,7 +49,15 @@ main = do
         run 3000 app)
 
 app :: Application
-app = serve AS.publicAPI server
+app = serve publicAPI server
+
+server :: Server PublicAPI
+server = Auth.server
+
+type PublicAPI = Auth.AuthAPI -- :<|> Handlers.ExpenditureAPI
+
+publicAPI :: Proxy PublicAPI
+publicAPI = Proxy
 
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createUsers
@@ -72,31 +80,10 @@ setupAssets :: ScottyM ()
 setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
 
-setupViewRoutes :: ScottyM ()
-setupViewRoutes = do
-  get "/" $ do
-    now <- liftIO getCurrentTime
-    cookie <- header "Cookie"
-    if fromMaybe False $ isAuthorized now <$> cookie
-      then redirect "/main"
-      else lucid $ View.index View.login
-  get "/register" $ lucid $ View.index View.register
-
 setupAPIRoutes :: AppConfig -> ScottyM ()
 setupAPIRoutes cfg = do
  -- expenditures
-  get "/expenditure" $ Handlers.getExpenditures cfg
   get "/expenditure/:id" $ Handlers.getExpenditure cfg
   get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
-  post "/expenditure" $ Handlers.createExpenditure cfg
-  -- post "/expenditure/:id" $ Handlers.updateExpenditure cfg
-  delete "/expenditure/:id" $ Handlers.deleteExpenditure cfg
-  -- auth
-  post "/registration" Auth.register
-  post "/login" Auth.login
-  get "/logout" $ do
-    Auth.unauthorize
-    redirect "/"
 
-  get "/main" $ Handlers.main' cfg
   notFound $ lucid $ View.index View.notFound

@@ -20,3 +20,7 @@ POST :host/expenditure
 
 # Deletes expenditure
 DELETE :host/expenditure/1
+
+# Retrieve JSON web token
+POST :host/auth?email=bla&pass=pw
+
