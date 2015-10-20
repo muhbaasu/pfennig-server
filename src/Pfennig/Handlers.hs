@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
+
 module Handlers where
 
 import           App
@@ -19,9 +21,18 @@ import           Models
 import           Network.HTTP.Types.Status
 import           Queries                   as Q
 import           View                      (index, main')
+import           Servant
 import           Web.Scotty                (ActionM, header, json, jsonData,
                                             param, raw, redirect, setHeader,
                                             status)
+
+type ExpenditureAPI = "expenditure" :> QueryParam "id" ExpenditureId :> Get '[JSON] (Expenditure 'REST)
+                 :<|> "expenditure" :> NewExpenditure :> Post '[JSON] (Expenditure 'REST)
+                 :<|> "expenditure" :> QueryParam "id" ExpenditureId :> Delete '[JSON] ()
+                 :<|> "expenditures"
+                      :> QueryParam "start" LocalTime
+                      :> QueryParam "end" LocalTime
+                      :> Get '[JSON] [Expenditure 'REST]
 
 getCss :: ByteString -> ActionM ()
 getCss css = do

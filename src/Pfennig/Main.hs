@@ -6,9 +6,7 @@ module Main where
 import           App
 import qualified Auth
 import           Control.Exception.Base        (bracket)
-import           Control.Monad.IO.Class        (liftIO)
-import           Data.Maybe                    (fromMaybe)
-import           Data.Time.Clock               (getCurrentTime)
+
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
@@ -17,15 +15,13 @@ import           Lucid
 import           Migrations
 import           Network.Wai                   (Application)
 import           Network.Wai.Handler.Warp      (run)
-import           Network.Wai.Middleware.Static (CacheContainer, CachingStrategy (PublicStaticCaching),
-                                                hasPrefix, initCaching,
+import           Network.Wai.Middleware.Static (CacheContainer, hasPrefix,
                                                 staticPolicy')
 import qualified Schema                        as S
 import           Servant
 import qualified View
-import           Web.Scotty                    (ActionM, ScottyM, delete, get,
-                                                header, middleware, notFound,
-                                                post, raw, redirect, scotty,
+import           Web.Scotty                    (ActionM, ScottyM, get,
+                                                middleware, notFound, raw,
                                                 setHeader)
 
 main :: IO ()
@@ -37,7 +33,6 @@ main = do
                          "pfennig"
                          "pfennig"
   sessionSettings <- maybe (fail "Invalid settings") return $ H.poolSettings 6 3
-  cache <- initCaching PublicStaticCaching
 
   bracket
     (H.acquirePool postgresSettings sessionSettings)
