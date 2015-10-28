@@ -54,6 +54,12 @@ type PublicAPI = Auth.AuthAPI -- :<|> Handlers.ExpenditureAPI
 publicAPI :: Proxy PublicAPI
 publicAPI = Proxy
 
+readerToEither :: AppConfig -> RouteM :~> EitherT ServantErr IO
+readerToEither cfg = Nat $ \x -> runReaderT x cfg
+
+readerServer :: AppConfig -> Server PublicAPI
+readerServer cfg = enter (readerToEither cfg) server
+
 migrations :: [H.Stmt HP.Postgres]
 migrations = [ S.createUsers
              , S.createIntervals
