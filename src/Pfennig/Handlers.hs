@@ -31,7 +31,7 @@ import           Web.Scotty                 (ActionM, header, json, jsonData,
 import           Data.Text                  ()
 import qualified Hasql                      as H
 
-type ExpenditureAPI = "expenditure" :> QueryParam "id" ExpenditureId :> Get '[JSON] (Expenditure 'Database)
+type ExpenditureAPI = "expenditure" :> Capture "id" ExpenditureId :> Get '[JSON] (Expenditure 'Database)
 --                 :<|> "expenditure" :> NewExpenditure :> Post '[JSON] (Expenditure 'REST)
 --               :<|> "expenditure" :> QueryParam "id" ExpenditureId :> Delete '[JSON] ()
 --                   :<|> "expenditures"
@@ -55,10 +55,10 @@ getCss css = do
   status ok200
   return ()
 
-getExpenditure :: Maybe ExpenditureId -> RouteM (Expenditure 'Database)
+getExpenditure :: ExpenditureId -> RouteM (Expenditure 'Database)
 getExpenditure eid = do
   (AppConfig session)<- ask
-  expenditure <- liftIO $ fmap mapErrText $ session $ H.tx Nothing $ singleExpenditure (ExpenditureId 1)
+  expenditure <- liftIO $ fmap mapErrText $ session $ H.tx Nothing $ singleExpenditure eid
   case expenditure of
     (Left _) -> lift $ left err404 -- TODO log err
     (Right ex) -> return ex

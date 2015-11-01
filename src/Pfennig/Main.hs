@@ -8,7 +8,7 @@ import qualified Auth
 import           Control.Exception.Base        (bracket)
 
 import           Control.Monad.Reader          (runReaderT)
-import           Control.Monad.Trans.Either    (EitherT, runEitherT)
+import           Control.Monad.Trans.Either    (EitherT)
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
