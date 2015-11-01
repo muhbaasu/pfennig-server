@@ -7,6 +7,8 @@ import           App
 import qualified Auth
 import           Control.Exception.Base        (bracket)
 
+import           Control.Monad.Reader          (runReaderT)
+import           Control.Monad.Trans.Either    (EitherT, runEitherT)
 import qualified Handlers
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as HP
@@ -41,15 +43,15 @@ main = do
         let session = H.session pool
         let cfg = AppConfig session
         runMigrations migrations pool
-        run 3000 app)
+        run 3000 $ app cfg)
 
-app :: Application
-app = serve publicAPI server
+app :: AppConfig -> Application
+app cfg = serve publicAPI (readerServer cfg)
 
-server :: Server PublicAPI
-server = Auth.server
+server :: ServerT PublicAPI RouteM
+server = Handlers.server
 
-type PublicAPI = Auth.AuthAPI -- :<|> Handlers.ExpenditureAPI
+type PublicAPI = Handlers.ExpenditureAPI -- :<|> Auth.AuthAPI
 
 publicAPI :: Proxy PublicAPI
 publicAPI = Proxy
@@ -84,7 +86,7 @@ setupAssets =
 setupAPIRoutes :: AppConfig -> ScottyM ()
 setupAPIRoutes cfg = do
  -- expenditures
-  get "/expenditure/:id" $ Handlers.getExpenditure cfg
+  --get "/expenditure/:id" $ Handlers.getExpenditure cfg
   get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
 
   notFound $ lucid $ View.index View.notFound

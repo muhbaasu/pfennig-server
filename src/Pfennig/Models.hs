@@ -12,6 +12,7 @@ import           Data.Text.Lazy      (unpack)
 import           Data.Time.Format    (defaultTimeLocale, formatTime,
                                       iso8601DateFormat, parseTimeM)
 import           Data.Time.LocalTime (LocalTime)
+import           Servant             (FromText, fromText)
 import           Web.Scotty          (Parsable (..))
 
 data Reference = -- | Might still require joins
@@ -66,6 +67,9 @@ data User =
 
 instance ToJSON ExpenditureId where
   toJSON (ExpenditureId eid) = toJSON eid
+
+instance FromText ExpenditureId where
+  fromText txt = ExpenditureId <$> fromText txt
 
 instance ToJSON UserId where
   toJSON (UserId uid) = toJSON uid
