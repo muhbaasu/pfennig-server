@@ -6,7 +6,8 @@
 module Auth where
 
 import           Control.Monad.IO.Class     (liftIO)
-import           Control.Monad.Trans.Either (EitherT, left)
+import           Control.Monad.Trans.Class  (lift)
+import           Control.Monad.Trans.Either (left)
 import qualified Data.ByteString.Lazy       as BS
 import           Data.Text
 import qualified Data.Text.Lazy             as TL
@@ -16,6 +17,8 @@ import           Data.Time.Clock            (NominalDiffTime, UTCTime (..),
                                              addUTCTime, diffUTCTime,
                                              getCurrentTime, secondsToDiffTime,
                                              secondsToDiffTime)
+
+import           App
 import           Models                     ()
 import           Servant
 import           Web.Cookie                 (parseCookiesText)
@@ -24,7 +27,10 @@ import qualified Web.JWT
 type AuthAPI = "auth" :> QueryParam "email" Text :> QueryParam "pass" Text :> Post '[JSON] Web.JWT.JSON
           :<|> "register" :> QueryParam "email" Text :> QueryParam "pass" Text :> Post '[JSON] Bool
 
-server :: Server AuthAPI
+authAPI :: Proxy AuthAPI
+authAPI = Proxy
+
+server :: ServerT AuthAPI RouteM
 server = auth
     :<|> register
 
@@ -38,14 +44,14 @@ sessionDuration :: NominalDiffTime
 sessionDuration = fromInteger $ 60 * 60 * 60
 
 -- | retrieve authorization token
-auth :: Maybe Text -> Maybe Text -> EitherT ServantErr IO Web.JWT.JSON
+auth :: Maybe Text -> Maybe Text -> RouteM Web.JWT.JSON
 auth email pass =  do
   now <- liftIO getCurrentTime
   case authorize now <$> email of
-    Nothing -> left err401
+    Nothing -> lift $ left err401
     Just x -> return x
 
-register :: Maybe Text -> Maybe Text -> EitherT ServantErr IO Bool
+register :: Maybe Text -> Maybe Text -> RouteM Bool
 register email pass = return True
 
 isValidLogin :: Text -> Text -> Bool

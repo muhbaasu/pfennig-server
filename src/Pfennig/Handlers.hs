@@ -6,6 +6,10 @@ module Handlers where
 
 import           App
 import           Auth
+import           Models
+import           Queries                    as Q
+import           View                       (index, main')
+
 import           Control.Error.Safe         (justErr)
 import           Control.Monad              (join)
 import           Control.Monad.IO.Class     (liftIO)
@@ -16,20 +20,16 @@ import           Data.Aeson                 (object, (.=))
 import           Data.Bifunctor             (bimap)
 import           Data.ByteString.Lazy       (ByteString)
 import           Data.Maybe                 (fromMaybe)
+import           Data.Text                  ()
 import           Data.Time.Clock            (getCurrentTime)
 import           Data.Time.LocalTime        (LocalTime)
+import qualified Hasql                      as H
 import           Lucid                      (renderBS)
-import           Models
 import           Network.HTTP.Types.Status
-import           Queries                    as Q
 import           Servant
-import           View                       (index, main')
 import           Web.Scotty                 (ActionM, header, json, jsonData,
                                              param, raw, redirect, setHeader,
                                              status)
-
-import           Data.Text                  ()
-import qualified Hasql                      as H
 
 type ExpenditureAPI = "expenditure" :> Capture "id" ExpenditureId :> Get '[JSON] (Expenditure 'Database)
 --                 :<|> "expenditure" :> NewExpenditure :> Post '[JSON] (Expenditure 'REST)

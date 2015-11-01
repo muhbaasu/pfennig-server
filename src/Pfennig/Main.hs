@@ -49,9 +49,10 @@ app :: AppConfig -> Application
 app cfg = serve publicAPI (readerServer cfg)
 
 server :: ServerT PublicAPI RouteM
-server = Handlers.server
+server = Auth.server :<|> Handlers.server
 
-type PublicAPI = Handlers.ExpenditureAPI -- :<|> Auth.AuthAPI
+type PublicAPI =  Auth.AuthAPI
+                  :<|> Handlers.ExpenditureAPI
 
 publicAPI :: Proxy PublicAPI
 publicAPI = Proxy
