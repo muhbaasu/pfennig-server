@@ -21,10 +21,8 @@ import           Network.Wai.Middleware.Static (CacheContainer, hasPrefix,
                                                 staticPolicy')
 import qualified Schema                        as S
 import           Servant
-import qualified View
 import           Web.Scotty                    (ActionM, ScottyM, get,
-                                                middleware, notFound, raw,
-                                                setHeader)
+                                                middleware, raw, setHeader)
 
 main :: IO ()
 main = do
@@ -83,11 +81,3 @@ setupMiddleware cache =
 setupAssets :: ScottyM ()
 setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
-
-setupAPIRoutes :: AppConfig -> ScottyM ()
-setupAPIRoutes cfg = do
- -- expenditures
-  --get "/expenditure/:id" $ Handlers.getExpenditure cfg
-  get "/expenditure/:start/:end" $ Handlers.getExpendituresBetween cfg
-
-  notFound $ lucid $ View.index View.notFound
