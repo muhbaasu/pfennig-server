@@ -1,15 +1,19 @@
 {-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeFamilies  #-}
 {-# LANGUAGE TypeOperators #-}
 
 module Auth where
 
+
+import           App
+import qualified Authentication as A
+import           Models
+
 import           Control.Monad.IO.Class     (liftIO)
 import           Control.Monad.Trans.Class  (lift)
 import           Control.Monad.Trans.Either (left)
-import qualified Data.ByteString.Lazy       as BS
-import           Data.Text
+import           Control.Monad.Reader       (ask)
+import qualified Data.ByteString.Lazy       as BL
 import qualified Data.Text.Lazy             as TL
 import qualified Data.Text.Lazy.Encoding    as TL
 import           Data.Time.Calendar         (fromGregorian)
@@ -17,22 +21,18 @@ import           Data.Time.Clock            (NominalDiffTime, UTCTime (..),
                                              addUTCTime, diffUTCTime,
                                              getCurrentTime, secondsToDiffTime,
                                              secondsToDiffTime)
-
-import           App
-import           Models                     ()
 import           Servant
 import           Web.Cookie                 (parseCookiesText)
 import qualified Web.JWT
 
-type AuthAPI = "auth" :> QueryParam "email" Text :> QueryParam "pass" Text :> Post '[JSON] Web.JWT.JSON
-          :<|> "register" :> QueryParam "email" Text :> QueryParam "pass" Text :> Post '[JSON] Bool
+type AuthAPI = "grant" :> ReqBody '[JSON] UserFields :> Post '[JSON] Web.JWT.JSON
+          :<|> "register" :> ReqBody '[JSON] UserFields :> Post '[JSON] ()
 
 authAPI :: Proxy AuthAPI
 authAPI = Proxy
 
 server :: ServerT AuthAPI RouteM
-server = auth
-    :<|> register
+server = grant :<|> register
 
 key :: Web.JWT.Secret
 key = Web.JWT.secret "all your base are belong to us"
@@ -43,21 +43,32 @@ epoch = UTCTime (fromGregorian 1970 1 1) (secondsToDiffTime 0)
 sessionDuration :: NominalDiffTime
 sessionDuration = fromInteger $ 60 * 60 * 60
 
--- | retrieve authorization token
-auth :: Maybe Text -> Maybe Text -> RouteM Web.JWT.JSON
-auth email pass =  do
+register :: UserFields -> RouteM ()
+register userfields = do
+  (AppConfig session) <- ask
+  r <- liftIO $ A.registerUser session userfields
+  case r of
+    Right _-> return ()
+    Left _ -> lift $ left err500
+
+grant :: UserFields -> RouteM Web.JWT.JSON
+grant u = do
+  (AppConfig session) <- ask
+  user <- liftIO $ A.loginUser session u
   now <- liftIO getCurrentTime
-  case authorize now <$> email of
-    Nothing -> lift $ left err401
-    Just x -> return x
+  case user of
+    Right _ -> return $ createToken (_usrFEmail u) now
+    Left _ -> lift $ left err401
 
-register :: Maybe Text -> Maybe Text -> RouteM Bool
-register email pass = return True
-
-isValidLogin :: Text -> Text -> Bool
-isValidLogin email pass = validEmail email && validPassword pass
-  where validEmail = (== "special@some.com")
-        validPassword = (== "passw0rd")
+createToken :: UserEmail -> UTCTime -> Web.JWT.JSON
+createToken (UserEmail address) now =
+  let jwtNbf = Web.JWT.intDate 0
+      jwtExp = Web.JWT.intDate $ diffUTCTime now epoch + sessionDuration
+      cs = Web.JWT.def {
+           Web.JWT.sub = Web.JWT.stringOrURI address
+         , Web.JWT.nbf = jwtNbf
+         , Web.JWT.exp = jwtExp }
+  in Web.JWT.encodeSigned Web.JWT.HS256 key cs
 
 isCurrentlyValid :: Web.JWT.JWT Web.JWT.VerifiedJWT -> UTCTime -> Bool
 isCurrentlyValid tkn now =
@@ -70,7 +81,7 @@ isCurrentlyValid tkn now =
 
 isAuthorized :: UTCTime -> TL.Text -> Bool
 isAuthorized now cookie =
-  let bs = BS.toStrict $ TL.encodeUtf8 cookie
+  let bs = BL.toStrict $ TL.encodeUtf8 cookie
       cs = parseCookiesText bs
       token = lookup "session" cs
   in case token of
@@ -78,13 +89,3 @@ isAuthorized now cookie =
       Just val ->
         let mJwt = Web.JWT.decodeAndVerifySignature key val
         in maybe False (`isCurrentlyValid` now) mJwt
-
-authorize :: UTCTime -> Text -> Web.JWT.JSON
-authorize now username =
-  let jwtNbf = Web.JWT.intDate 0
-      jwtExp = Web.JWT.intDate $ diffUTCTime now epoch + sessionDuration
-      cs = Web.JWT.def {
-              Web.JWT.sub = Web.JWT.stringOrURI username
-            , Web.JWT.nbf = jwtNbf
-            , Web.JWT.exp = jwtExp }
-  in Web.JWT.encodeSigned Web.JWT.HS256 key cs

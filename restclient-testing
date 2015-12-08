@@ -22,5 +22,12 @@ POST :host/expenditure
 DELETE :host/expenditure/1
 
 # Retrieve JSON web token
-POST :host/auth?email=bla&pass=pw
+POST :host/grant
+Content-Type: application/json
+{"email":"john@doe.com","pw":"thisistrulysafe"}
+
+# Register new user
+POST :host/register
+Content-Type: application/json
+{"email":"john@doe.com","pw":"thisistrulysafe"}
 

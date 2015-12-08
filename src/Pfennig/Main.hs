@@ -6,7 +6,6 @@ module Main where
 import           App
 import qualified Auth
 import           Control.Exception.Base        (bracket)
-
 import           Control.Monad.Reader          (runReaderT)
 import           Control.Monad.Trans.Either    (EitherT)
 import qualified Handlers
@@ -81,3 +80,4 @@ setupMiddleware cache =
 setupAssets :: ScottyM ()
 setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
+
