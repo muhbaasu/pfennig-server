@@ -3,6 +3,7 @@
 
 module Main where
 
+import Control.Concurrent (myThreadId)
 import           App
 import qualified Auth
 import           Control.Exception.Base        (bracket)
@@ -22,9 +23,20 @@ import qualified Schema                        as S
 import           Servant
 import           Web.Scotty                    (ActionM, ScottyM, get,
                                                 middleware, raw, setHeader)
+import qualified Control.Concurrent.STM as STM
+import qualified Control.Concurrent.STM.TBQueue as TBQ
+import Events.Recorder
 
 main :: IO ()
 main = do
+  q <- STM.atomically $ (TBQ.newTBQueue 10 :: STM.STM (TBQ.TBQueue Event))
+  _ <- recordEvents q
+  tid <- myThreadId
+  putStrLn $ "[Thread " ++ show tid ++ "] Sending messages"
+  _ <- STM.atomically $ do
+    TBQ.writeTBQueue q $ Hello "Marzell!"
+    TBQ.writeTBQueue q $ Goodbye "Zamuel!"
+
   let postgresSettings = HP.ParamSettings
                          "localhost"
                          5432
@@ -80,4 +92,3 @@ setupMiddleware cache =
 setupAssets :: ScottyM ()
 setupAssets =
   get "/assets/generated.css" $ Handlers.getCss readCSS
-
